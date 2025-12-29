@@ -1,17 +1,13 @@
 import { Controller, Get, Post, Put, Delete, Body, Param, Query } from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiResponse, ApiBearerAuth, ApiQuery } from '@nestjs/swagger';
-// import { Roles } from '../../../../common/decorators/roles.decorator';
-// import { UserRole, UserStatus } from '../../../../common/constants/user.constants';
 import { UserManagementService } from '../services/user-management.service';
 import { CreateUserDto } from '../dto/create-user.dto';
 import { Roles } from 'src/common/decorators/roles.decorator';
-import { RequirePermission } from 'src/common/decorators/permissions.decorator';
-import { UserRole, UserStatus, Permission } from 'src/common/constants/user.constants';
+import { UserRole, UserStatus } from 'src/common/constants/user.constants';
 
 @ApiTags('Admin - Users')
 @ApiBearerAuth()
-@Roles(UserRole.ADMIN, UserRole.SUB_ADMIN)
-@RequirePermission(Permission.USER_MANAGEMENT)
+@Roles(UserRole.ADMIN)
 @Controller('admin/users')
 export class AdminUserController {
     constructor(private readonly userManagementService: UserManagementService) { }

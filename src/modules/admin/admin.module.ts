@@ -34,12 +34,15 @@ import { SubAdminController } from './controllers/sub-admin.controller';
 import { NonUserInvoiceService } from './services/non-user-invoice.service';
 import { NonUserInvoiceController } from './controllers/non-user-invoice.controller';
 import { StripeWebhookController } from './controllers/stripe-webhook.controller';
+import { CategoryService } from './services/category.service';
+import { AdminCategoryController } from './controllers/admin-category.controller';
 import { CommonModule } from 'src/common/common.module';
 import { NotificationModule } from '../notification/notification.module';
 import { UserModule } from '../user/user.module';
+import { CategoryModule } from '../category/category.module';
 
 @Module({
-    imports: [SharedModule, CommonModule, ConfigModule, JwtModule, ContactModule, NotificationModule, UserModule],
+    imports: [SharedModule, CommonModule, ConfigModule, JwtModule, ContactModule, NotificationModule, UserModule, CategoryModule],
     providers: [
         AdminAuthService,
         UserManagementService,
@@ -54,7 +57,8 @@ import { UserModule } from '../user/user.module';
         RescheduleRequestService,
         AdminBookingService,
         SubAdminService,
-        NonUserInvoiceService
+        NonUserInvoiceService,
+        CategoryService
     ],
     controllers: [
         AdminAuthController,
@@ -73,7 +77,8 @@ import { UserModule } from '../user/user.module';
         AdminBookingController,
         SubAdminController,
         NonUserInvoiceController,
-        StripeWebhookController
+        StripeWebhookController,
+        AdminCategoryController
     ],
 })
 export class AdminModule { }

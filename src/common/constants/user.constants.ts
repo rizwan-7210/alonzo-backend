@@ -1,5 +1,6 @@
 export enum UserRole {
     ADMIN = 'admin',
+    VENDOR = 'vendor',
     USER = 'user',
     SUB_ADMIN = 'sub_admin',
 }
@@ -8,6 +9,12 @@ export enum UserStatus {
     ACTIVE = 'active',
     INACTIVE = 'inactive',
     SUSPENDED = 'suspended',
+}
+
+export enum AccountStatus {
+    PENDING = 'pending',
+    APPROVED = 'approved',
+    REJECTED = 'rejected',
 }
 
 export enum Permission {
@@ -28,12 +35,3 @@ export enum Permission {
     QUERY_MANAGEMENT = 'query:management',
     SUB_ADMIN_MANAGEMENT = 'sub_admin:management',
 }
-
-export const RolePermissions = {
-    [UserRole.ADMIN]: Object.values(Permission),
-    [UserRole.USER]: [
-        Permission.USER_PROFILE_READ,
-        Permission.USER_PROFILE_UPDATE,
-        Permission.USER_PASSWORD_UPDATE,
-    ],
-};

@@ -1,7 +1,7 @@
 // shared/schemas/user.schema.ts
 import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose';
-import { Document } from 'mongoose';
-import { UserRole, UserStatus } from '../../common/constants/user.constants';
+import { Document, Types } from 'mongoose';
+import { UserRole, UserStatus, AccountStatus } from '../../common/constants/user.constants';
 import { FileCategory } from '../../common/constants/file.constants';
 
 export type UserDocument = User & Document;
@@ -52,8 +52,8 @@ export class User {
     @Prop({ type: String, required: true, trim: true })
     firstName: string;
 
-    @Prop({ type: String, required: true, trim: true })
-    lastName: string;
+    @Prop({ type: String, trim: true })
+    lastName?: string;
 
     @Prop({ type: String, required: true, select: false })
     password: string;
@@ -72,6 +72,13 @@ export class User {
     })
     status: UserStatus;
 
+    @Prop({
+        type: String,
+        enum: Object.values(AccountStatus),
+        default: AccountStatus.PENDING,
+    })
+    accountStatus?: AccountStatus;
+
     @Prop({ type: String, select: false })
     refreshToken?: string;
 
@@ -79,7 +86,25 @@ export class User {
     phone?: string;
 
     @Prop({ type: String })
+    dial_code?: string;
+
+    @Prop({ type: String })
     address?: string;
+
+    @Prop({ type: String })
+    location?: string;
+
+    @Prop({ type: String })
+    website?: string;
+
+    @Prop({ type: Types.ObjectId, ref: 'Category' })
+    categoryId?: Types.ObjectId;
+
+    @Prop({ type: String })
+    rejectionReason?: string;
+
+    @Prop({ type: String })
+    deviceToken?: string;
 
     @Prop({ type: String })
     avatar?: string;
@@ -119,12 +144,14 @@ UserSchema.virtual('files', {
 
 // Virtual for full name
 UserSchema.virtual('fullName').get(function () {
-    return `${this.firstName} ${this.lastName}`;
+    return this.lastName ? `${this.firstName} ${this.lastName}` : this.firstName;
 });
 
 // Indexes
 UserSchema.index({ email: 1 }, { unique: true });
 UserSchema.index({ role: 1 });
 UserSchema.index({ status: 1 });
+UserSchema.index({ accountStatus: 1 });
+UserSchema.index({ categoryId: 1 });
 UserSchema.index({ createdAt: -1 });
 UserSchema.index({ deletedAt: 1 });

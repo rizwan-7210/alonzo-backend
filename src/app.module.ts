@@ -14,6 +14,7 @@ import { FileModule } from './modules/file/file.module';
 import { AdminModule } from './modules/admin/admin.module';
 import { NotificationModule } from './modules/notification/notification.module';
 import { ContactModule } from './modules/contact/contact.module';
+import { VendorModule } from './modules/vendor/vendor.module';
 import { SharedModule } from './shared/shared.module';
 
 @Module({
@@ -43,6 +44,7 @@ import { SharedModule } from './shared/shared.module';
     AdminModule,
     NotificationModule,
     ContactModule,
+    VendorModule,
   ],
 })
 export class AppModule { }

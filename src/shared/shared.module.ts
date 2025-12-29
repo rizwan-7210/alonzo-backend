@@ -36,6 +36,8 @@ import { SubAdminPermission, SubAdminPermissionSchema } from './schemas/sub-admi
 import { SubAdminPermissionRepository } from './repositories/sub-admin-permission.repository';
 import { NonUserInvoice, NonUserInvoiceSchema } from './schemas/non-user-invoice.schema';
 import { NonUserInvoiceRepository } from './repositories/non-user-invoice.repository';
+import { Category, CategorySchema } from './schemas/category.schema';
+import { CategoryRepository } from './repositories/category.repository';
 import { FormatterService } from './services/formatter.service';
 
 @Module({
@@ -59,9 +61,10 @@ import { FormatterService } from './services/formatter.service';
             { name: Invoice.name, schema: InvoiceSchema },
             { name: SubAdminPermission.name, schema: SubAdminPermissionSchema },
             { name: NonUserInvoice.name, schema: NonUserInvoiceSchema },
+            { name: Category.name, schema: CategorySchema },
         ]),
     ],
-    providers: [UserRepository, FileRepository, NotificationRepository, ContactRepository, PasswordResetRepository, TutorialRepository, PlanRepository, UserSubscriptionRepository, PaymentLogRepository, AvailabilityRepository, PricingRepository, PricingLogRepository, RescheduleRequestRepository, BookingRepository, ReviewRepository, InvoiceRepository, SubAdminPermissionRepository, NonUserInvoiceRepository, FormatterService],
-    exports: [MongooseModule, UserRepository, FileRepository, NotificationRepository, ContactRepository, PasswordResetRepository, TutorialRepository, PlanRepository, UserSubscriptionRepository, PaymentLogRepository, AvailabilityRepository, PricingRepository, PricingLogRepository, RescheduleRequestRepository, BookingRepository, ReviewRepository, InvoiceRepository, SubAdminPermissionRepository, NonUserInvoiceRepository, FormatterService],
+    providers: [UserRepository, FileRepository, NotificationRepository, ContactRepository, PasswordResetRepository, TutorialRepository, PlanRepository, UserSubscriptionRepository, PaymentLogRepository, AvailabilityRepository, PricingRepository, PricingLogRepository, RescheduleRequestRepository, BookingRepository, ReviewRepository, InvoiceRepository, SubAdminPermissionRepository, NonUserInvoiceRepository, CategoryRepository, FormatterService],
+    exports: [MongooseModule, UserRepository, FileRepository, NotificationRepository, ContactRepository, PasswordResetRepository, TutorialRepository, PlanRepository, UserSubscriptionRepository, PaymentLogRepository, AvailabilityRepository, PricingRepository, PricingLogRepository, RescheduleRequestRepository, BookingRepository, ReviewRepository, InvoiceRepository, SubAdminPermissionRepository, NonUserInvoiceRepository, CategoryRepository, FormatterService],
 })
 export class SharedModule { }

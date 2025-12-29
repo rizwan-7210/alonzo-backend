@@ -3,28 +3,28 @@ import { JwtService } from '@nestjs/jwt';
 import { ConfigService } from '@nestjs/config';
 import * as bcrypt from 'bcryptjs';
 import { UserRepository } from '../../../shared/repositories/user.repository';
-import { RegisterDto } from '../dto/register.dto';
-import { LoginDto } from '../dto/login.dto';
-import { UserStatus, UserRole } from '../../../common/constants/user.constants';
+import { VendorLoginDto } from '../dto/login.dto';
+import { VendorRegisterDto } from '../dto/register.dto';
+import { UserRole, UserStatus } from '../../../common/constants/user.constants';
+import { sanitizeUserUtils } from '../../../common/utils/sanitize-user-utils';
+import { StripeService } from '../../../common/services/stripe.service';
 import { NotificationService } from 'src/modules/notification/services/notification.service';
 import { FileRepository } from 'src/shared/repositories/file.repository';
 import { FileType, FileCategory } from '../../../common/constants/file.constants';
 import { Types } from "mongoose";
-import { sanitizeUserUtils } from 'src/common/utils/sanitize-user-utils';
-import { StripeService } from 'src/common/services/stripe.service';
 
 @Injectable()
-export class UserAuthService {
+export class VendorAuthService {
     constructor(
         private readonly userRepository: UserRepository,
         private readonly fileRepository: FileRepository,
         private readonly jwtService: JwtService,
         private readonly configService: ConfigService,
-        private readonly notificationService: NotificationService,
         private readonly stripeService: StripeService,
+        private readonly notificationService: NotificationService,
     ) { }
 
-    async register(registerDto: RegisterDto, avatar?: Express.Multer.File) {
+    async register(registerDto: VendorRegisterDto, avatar?: Express.Multer.File) {
         const { email, password, confirmPassword, firstName, lastName, phone, address } = registerDto;
 
         if (password !== confirmPassword) {
@@ -38,7 +38,7 @@ export class UserAuthService {
 
         const hashedPassword = await bcrypt.hash(password, 10);
 
-        // Create user first - only USER role allowed for public registration
+        // Create vendor - explicitly set to VENDOR role
         const user = await this.userRepository.create({
             email: email.toLowerCase(),
             firstName,
@@ -46,19 +46,23 @@ export class UserAuthService {
             password: hashedPassword,
             phone,
             address,
-            role: UserRole.USER, // Explicitly set to USER role
+            role: UserRole.VENDOR, // Explicitly set to VENDOR role
         });
 
         // Create Stripe customer
-        const stripeCustomerId = await this.stripeService.createCustomer(
-            email.toLowerCase(),
-            `${firstName} ${lastName}`,
-        );
+        try {
+            const stripeCustomerId = await this.stripeService.createCustomer(
+                email.toLowerCase(),
+                `${firstName} ${lastName}`,
+            );
+            // Update user with Stripe customer ID
+            await this.userRepository.update(user._id.toString(), { stripeCustomerId });
+        } catch (error) {
+            // Continue even if Stripe customer creation fails
+            console.warn('Failed to create Stripe customer for vendor:', error);
+        }
 
-        // Update user with Stripe customer ID
-        await this.userRepository.update(user._id.toString(), { stripeCustomerId });
-
-        // ✔ Save avatar if uploaded
+        // Save avatar if uploaded
         if (avatar) {
             const savedFile = await this.fileRepository.create({
                 name: avatar.filename,
@@ -94,7 +98,7 @@ export class UserAuthService {
         };
     }
 
-    async login(loginDto: LoginDto) {
+    async login(loginDto: VendorLoginDto) {
         const { email, password } = loginDto;
 
         // Find user with password
@@ -103,9 +107,9 @@ export class UserAuthService {
             throw new UnauthorizedException('Invalid credentials');
         }
 
-        // Check if user is a regular user (not vendor or admin)
-        if (user.role !== UserRole.USER) {
-            throw new UnauthorizedException('Access denied. Please use the appropriate login endpoint for your account type.');
+        // Check if user is a vendor
+        if (user.role !== UserRole.VENDOR) {
+            throw new UnauthorizedException('Access denied. Vendor account required.');
         }
 
         // Check if user is active
@@ -121,11 +125,16 @@ export class UserAuthService {
 
         // Ensure Stripe customer exists
         if (!user.stripeCustomerId) {
-            const stripeCustomerId = await this.stripeService.createCustomer(
-                user.email,
-                `${user.firstName} ${user.lastName}`,
-            );
-            await this.userRepository.update(user._id.toString(), { stripeCustomerId });
+            try {
+                const stripeCustomerId = await this.stripeService.createCustomer(
+                    user.email,
+                    `${user.firstName} ${user.lastName}`,
+                );
+                await this.userRepository.update(user._id.toString(), { stripeCustomerId });
+            } catch (error) {
+                // Continue even if Stripe customer creation fails
+                console.warn('Failed to create Stripe customer for vendor:', error);
+            }
         }
 
         // Generate tokens
@@ -141,24 +150,6 @@ export class UserAuthService {
 
     async logout(userId: string) {
         return this.userRepository.updateRefreshToken(userId, null);
-    }
-
-    async refreshTokens(userId: string, refreshToken: string) {
-        const user = await this.userRepository.findById(userId);
-        if (!user || !user.refreshToken) {
-            throw new UnauthorizedException('Invalid refresh token');
-        }
-
-        // In a real application, you might want to verify the refresh token here
-        // For now, we'll just check if it matches
-        if (user.refreshToken !== refreshToken) {
-            throw new UnauthorizedException('Refresh token mismatch');
-        }
-
-        const tokens = await this.generateTokens(user._id.toString(), user.email, user.role);
-        await this.userRepository.updateRefreshToken(user._id.toString(), tokens.refreshToken);
-
-        return tokens;
     }
 
     private async generateTokens(userId: string, email: string, role: string) {
@@ -179,3 +170,4 @@ export class UserAuthService {
         };
     }
 }
+

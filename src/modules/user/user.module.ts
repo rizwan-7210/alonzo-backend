@@ -30,6 +30,8 @@ import { MongooseModule } from '@nestjs/mongoose';
 import { CommonModule } from 'src/common/common.module';
 import { PricingService } from './services/pricing.service';
 import { PricingController } from './controllers/pricing.controller';
+import { UserCategoryController } from './controllers/user-category.controller';
+import { CategoryModule } from '../category/category.module';
 
 @Module({
     imports: [
@@ -39,6 +41,7 @@ import { PricingController } from './controllers/pricing.controller';
         JwtModule,
         FileModule,
         NotificationModule,
+        CategoryModule, // Import CategoryModule to use CategoryService
         MulterModule.register(multerConfig),
         MongooseModule.forFeature([{ name: Booking.name, schema: BookingSchema }])
     ],
@@ -63,7 +66,8 @@ import { PricingController } from './controllers/pricing.controller';
         PlanController,
         UserAvailabilityController,
         PricingController,
-        UserBookingController
+        UserBookingController,
+        UserCategoryController
     ],
     exports: [UserAvailabilityService],
 })
