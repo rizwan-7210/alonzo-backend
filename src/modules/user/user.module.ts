@@ -16,12 +16,8 @@ import { PlanController } from './controllers/plan.controller';
 import { PlanService } from './services/plan.service';
 
 import { UserNotificationService } from './services/user-notification.service';
-import { UserAvailabilityService } from './services/user-availability.service';
-import { UserAvailabilityController } from './controllers/user-availability.controller';
 
 import { CommonModule } from 'src/common/common.module';
-import { PricingService } from './services/pricing.service';
-import { PricingController } from './controllers/pricing.controller';
 import { UserCategoryController } from './controllers/user-category.controller';
 import { CategoryModule } from '../category/category.module';
 
@@ -41,8 +37,6 @@ import { CategoryModule } from '../category/category.module';
         UserAuthService,
         PlanService,
         UserNotificationService,
-        UserAvailabilityService,
-        PricingService,
     ],
     controllers: [
         UserAuthController,
@@ -50,10 +44,8 @@ import { CategoryModule } from '../category/category.module';
         UserFileController,
         UserNotificationController,
         PlanController,
-        UserAvailabilityController,
-        PricingController,
         UserCategoryController
     ],
-    exports: [UserAvailabilityService],
+    exports: [],
 })
 export class UserModule { }

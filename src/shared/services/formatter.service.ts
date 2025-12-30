@@ -5,7 +5,6 @@ import {
     InvoiceFormatter,
     ReviewFormatter,
     PaymentLogFormatter,
-    NonUserInvoiceFormatter,
 } from '../formatters';
 
 /**
@@ -39,15 +38,6 @@ export class FormatterService {
 
     formatPaymentLogForListing(paymentLog: any, index: number, page: number, limit: number) {
         return PaymentLogFormatter.formatForListing(paymentLog, index, page, limit);
-    }
-
-    // Non-user invoice formatters
-    formatNonUserInvoice(invoice: any) {
-        return NonUserInvoiceFormatter.format(invoice);
-    }
-
-    formatNonUserInvoiceForListing(invoice: any, index: number, page: number, limit: number) {
-        return NonUserInvoiceFormatter.formatForListing(invoice, index, page, limit);
     }
 
     // Base utilities (exposed for convenience)

@@ -18,13 +18,7 @@ import { PlanController } from './controllers/plan.controller';
 import { PlanService } from './services/plan.service';
 import { SubscriptionLogController } from './controllers/subscription-log.controller';
 import { SubscriptionLogService } from './services/subscription-log.service';
-import { AvailabilityService } from './services/availability.service';
-import { AvailabilityController } from './controllers/availability.controller';
-import { PricingService } from './services/pricing.service';
-import { PricingController } from './controllers/pricing.controller';
 import { AdminNotificationService } from './services/admin-notification.service';
-import { NonUserInvoiceService } from './services/non-user-invoice.service';
-import { NonUserInvoiceController } from './controllers/non-user-invoice.controller';
 import { StripeWebhookController } from './controllers/stripe-webhook.controller';
 import { CategoryService } from './services/category.service';
 import { AdminCategoryController } from './controllers/admin-category.controller';
@@ -42,10 +36,7 @@ import { CategoryModule } from '../category/category.module';
         DashboardService,
         PlanService,
         SubscriptionLogService,
-        AvailabilityService,
-        PricingService,
         AdminNotificationService,
-        NonUserInvoiceService,
         CategoryService
     ],
     controllers: [
@@ -58,9 +49,6 @@ import { CategoryModule } from '../category/category.module';
         DashboardController,
         PlanController,
         SubscriptionLogController,
-        AvailabilityController,
-        PricingController,
-        NonUserInvoiceController,
         StripeWebhookController,
         AdminCategoryController
     ],
