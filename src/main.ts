@@ -33,6 +33,19 @@ async function bootstrap() {
     logger: isProduction ? ['error', 'warn', 'log'] : ['debug', 'error', 'warn', 'log']
   });
 
+  // Configure body parser for form data (application/x-www-form-urlencoded)
+  // NestJS uses Express which has body parser built-in
+  const expressInstance = app.getHttpAdapter().getInstance();
+  if (expressInstance && typeof expressInstance.use === 'function') {
+    // Express 4.16+ has body parser built-in - configure it before other middleware
+    const express = require('express');
+    // Apply urlencoded parser with extended option to handle nested objects
+    // This MUST be before JSON parser to handle form data correctly
+    expressInstance.use(express.urlencoded({ extended: true, limit: '10mb' }));
+    // Also ensure JSON parser is configured
+    expressInstance.use(express.json({ limit: '10mb' }));
+  }
+
   const reflector = app.get(Reflector);
 
   // Trust proxy for production - using Express instance directly

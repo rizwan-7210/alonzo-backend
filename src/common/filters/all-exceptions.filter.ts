@@ -31,11 +31,13 @@ export class AllExceptionsFilter implements ExceptionFilter {
 
         response.status(status).json({
             success: false,
-            message,
-            error,
-            statusCode: status,
+            message: message,
+            data: {
+                error,
+                statusCode: status,
+                path: request.url,
+            },
             timestamp: new Date().toISOString(),
-            path: request.url,
         });
     }
 }

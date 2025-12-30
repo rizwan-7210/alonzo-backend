@@ -1,4 +1,4 @@
-import { Controller, Post, Body, HttpCode, HttpStatus, UseInterceptors, UploadedFiles, BadRequestException, UsePipes, ValidationPipe } from '@nestjs/common';
+import { Controller, Post, Body, HttpCode, HttpStatus, UseInterceptors, UploadedFiles, BadRequestException, UsePipes, ValidationPipe, Req } from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiResponse, ApiConsumes, ApiBody } from '@nestjs/swagger';
 import { FileFieldsInterceptor } from '@nestjs/platform-express';
 import { VendorAuthService } from '../services/vendor-auth.service';
@@ -6,6 +6,7 @@ import { VendorLoginDto } from '../dto/login.dto';
 import { VendorRegisterDto } from '../dto/register.dto';
 import { Public } from '../../../common/decorators/public.decorator';
 import { multerConfig } from 'src/config/multer.config';
+import type { Request } from 'express';
 
 @ApiTags('Vendor - Authentication')
 @Controller('vendor/auth')
@@ -51,10 +52,26 @@ export class VendorAuthController {
     @Public()
     @Post('login')
     @HttpCode(HttpStatus.OK)
+    @UsePipes(new ValidationPipe({
+        whitelist: true,
+        forbidNonWhitelisted: false, // Allow form data to pass through
+        transform: true,
+        transformOptions: {
+            enableImplicitConversion: true, // Convert string to appropriate types
+        },
+    }))
     @ApiOperation({ summary: 'Login vendor' })
     @ApiResponse({ status: 200, description: 'Vendor successfully logged in' })
     @ApiResponse({ status: 401, description: 'Invalid credentials or not a vendor account' })
-    async login(@Body() loginDto: VendorLoginDto) {
+    async login(@Body() loginDto: VendorLoginDto, @Req() req: Request) {
+        // Ensure form data is properly parsed - if body is empty, try to parse from request
+        if (!loginDto.email && !loginDto.password && req.body) {
+            const body = req.body as any;
+            loginDto = {
+                email: body.email || '',
+                password: body.password || '',
+            };
+        }
         return this.vendorAuthService.login(loginDto);
     }
 
