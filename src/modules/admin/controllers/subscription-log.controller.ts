@@ -1,8 +1,7 @@
 import { Controller, Get, Param, Query } from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiResponse, ApiBearerAuth, ApiQuery } from '@nestjs/swagger';
 import { Roles } from '../../../common/decorators/roles.decorator';
-import { RequirePermission } from '../../../common/decorators/permissions.decorator';
-import { UserRole, Permission } from '../../../common/constants/user.constants';
+import { UserRole } from '../../../common/constants/user.constants';
 import { SubscriptionLogService } from '../services/subscription-log.service';
 import { SubscriptionQueryDto } from '../dto/subscription-query.dto';
 import { PaymentLogQueryDto } from '../dto/payment-log-query.dto';
@@ -10,7 +9,6 @@ import { PaymentLogQueryDto } from '../dto/payment-log-query.dto';
 @ApiTags('Admin - Subscription Logs')
 @ApiBearerAuth()
 @Roles(UserRole.ADMIN)
-@RequirePermission(Permission.SUBSCRIPTION_MANAGEMENT)
 @Controller('admin/subscription-logs')
 export class SubscriptionLogController {
     constructor(private readonly subscriptionLogService: SubscriptionLogService) { }

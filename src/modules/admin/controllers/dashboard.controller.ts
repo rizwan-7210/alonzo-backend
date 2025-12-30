@@ -3,13 +3,11 @@ import { ApiTags, ApiOperation, ApiResponse, ApiBearerAuth, ApiQuery } from '@ne
 import { DashboardService } from '../services/dashboard.service';
 import { DashboardQueryDto, GroupBy } from '../dto/dashboard-query.dto';
 import { Roles } from '../../../common/decorators/roles.decorator';
-import { RequirePermission } from '../../../common/decorators/permissions.decorator';
-import { UserRole, Permission } from '../../../common/constants/user.constants';
+import { UserRole } from '../../../common/constants/user.constants';
 
 @ApiTags('Admin - Dashboard')
 @ApiBearerAuth()
 @Roles(UserRole.ADMIN)
-@RequirePermission(Permission.DASHBOARD_ACCESS)
 @Controller('admin/dashboard')
 export class DashboardController {
     constructor(

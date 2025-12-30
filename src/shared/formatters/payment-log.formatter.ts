@@ -1,6 +1,5 @@
 import { BaseFormatter } from './base.formatter';
 import { PaymentType } from '../../common/constants/payment.constants';
-import { SlotType } from '../../common/constants/availability.constants';
 
 export class PaymentLogFormatter {
     /**
@@ -51,7 +50,7 @@ export class PaymentLogFormatter {
     }
 
     /**
-     * Format payment log for listing (with user and booking info)
+     * Format payment log for listing (with user info)
      */
     static formatForListing(paymentLog: any, index: number, page: number, limit: number): any {
         const formatted = this.format(paymentLog);
@@ -59,7 +58,6 @@ export class PaymentLogFormatter {
 
         const logObj = BaseFormatter.toPlainObject(paymentLog);
         const user = logObj.userId ? BaseFormatter.toPlainObject(logObj.userId) : {};
-        const booking = logObj.bookingId ? BaseFormatter.toPlainObject(logObj.bookingId) : null;
 
         // Get user name and email
         const userObj = user && typeof user === 'object' ? user : {};
@@ -67,27 +65,12 @@ export class PaymentLogFormatter {
             ? `${userObj.firstName} ${userObj.lastName}`
             : userObj.email || 'N/A';
 
-        // Format booking ID (last 6 characters)
-        let bookingId = 'N/A';
-        if (logObj.bookingId) {
-            const bookingIdStr = BaseFormatter.objectIdToString(logObj.bookingId);
-            if (bookingIdStr) {
-                bookingId = `#${bookingIdStr.slice(-6).padStart(6, '0')}`;
-            }
-        }
-
         // Format type display name
         let typeDisplay = 'N/A';
-        if (booking && booking.type) {
-            if (booking.type === SlotType.VIDEO_CONSULTANCY) {
-                typeDisplay = 'Video Consultation';
-            } else if (booking.type === SlotType.ONSITE_APPOINTMENT) {
-                typeDisplay = 'Onsite Visit';
-            }
-        } else if (formatted.paymentType === PaymentType.SUBSCRIPTION) {
+        if (formatted.paymentType === PaymentType.SUBSCRIPTION) {
             typeDisplay = 'Subscription';
-        } else if (formatted.paymentType === PaymentType.ONE_TIME || formatted.paymentType === PaymentType.BOOKING) {
-            typeDisplay = 'Booking Payment';
+        } else if (formatted.paymentType === PaymentType.ONE_TIME) {
+            typeDisplay = 'One-time Payment';
         }
 
         // Format date as MM/DD/YYYY
@@ -101,11 +84,10 @@ export class PaymentLogFormatter {
         return {
             serialNumber: (page - 1) * limit + index + 1,
             ...formatted,
-            bookingId,
             userId: BaseFormatter.objectIdToString(userObj._id || logObj.userId),
             userName,
             email: userObj.email || 'N/A',
-            type: booking?.type || formatted.paymentType,
+            type: formatted.paymentType,
             typeDisplay,
             date: dateFormatted,
             amountFormatted,

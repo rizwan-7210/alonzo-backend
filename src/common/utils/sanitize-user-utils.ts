@@ -34,6 +34,33 @@ export class sanitizeUserUtils {
             userObj.avatar = null;
         }
 
+        // Handle categoryId - convert to string if it's an ObjectId
+        if (userObj.categoryId && typeof userObj.categoryId === 'object') {
+            userObj.categoryId = userObj.categoryId.toString();
+        }
+
+        // Handle category relation - if populated, use it; otherwise keep categoryId as string
+        if (userObj.category) {
+            const categoryObj = userObj.category.toObject ? userObj.category.toObject() : userObj.category;
+            userObj.category = {
+                id: categoryObj._id ? categoryObj._id.toString() : categoryObj.id,
+                title: categoryObj.title,
+                status: categoryObj.status,
+                createdAt: categoryObj.createdAt ? new Date(categoryObj.createdAt).toISOString() : null,
+                updatedAt: categoryObj.updatedAt ? new Date(categoryObj.updatedAt).toISOString() : null,
+            };
+            // Keep categoryId as string reference
+            userObj.categoryId = userObj.category.id;
+        } else if (userObj.categoryId) {
+            // If category is not populated, ensure categoryId is a string and set category to null
+            userObj.categoryId = typeof userObj.categoryId === 'object' 
+                ? userObj.categoryId.toString() 
+                : userObj.categoryId;
+            userObj.category = null;
+        } else {
+            userObj.category = null;
+        }
+
         // Convert dates from objects to ISO strings
         if (userObj.createdAt && typeof userObj.createdAt === 'object') {
             userObj.createdAt = new Date(userObj.createdAt).toISOString();

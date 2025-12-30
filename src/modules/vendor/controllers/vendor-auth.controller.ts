@@ -1,4 +1,4 @@
-import { Controller, Post, Body, HttpCode, HttpStatus, UseInterceptors, UploadedFiles, BadRequestException } from '@nestjs/common';
+import { Controller, Post, Body, HttpCode, HttpStatus, UseInterceptors, UploadedFiles, BadRequestException, UsePipes, ValidationPipe } from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiResponse, ApiConsumes, ApiBody } from '@nestjs/swagger';
 import { FileFieldsInterceptor } from '@nestjs/platform-express';
 import { VendorAuthService } from '../services/vendor-auth.service';
@@ -14,6 +14,11 @@ export class VendorAuthController {
 
     @Public()
     @Post('register')
+    @UsePipes(new ValidationPipe({
+        whitelist: true,
+        forbidNonWhitelisted: false, // Allow file fields to pass through
+        transform: true,
+    }))
     @UseInterceptors(FileFieldsInterceptor([
         { name: 'profileImage', maxCount: 1 },
         { name: 'pharmacyLicense', maxCount: 1 },

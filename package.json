@@ -20,7 +20,8 @@
     "migration:add-vendor-role": "ts-node -r tsconfig-paths/register src/migrations/add-vendor-role.migration.ts",
     "migration:update-users-schema": "ts-node -r tsconfig-paths/register src/migrations/update-users-schema.migration.ts",
     "migration:create-categories": "ts-node -r tsconfig-paths/register src/migrations/create-categories.migration.ts",
-    "migration:migrate-avatars-to-files": "ts-node -r tsconfig-paths/register src/migrations/migrate-avatars-to-files.migration.ts"
+    "migration:migrate-avatars-to-files": "ts-node -r tsconfig-paths/register src/migrations/migrate-avatars-to-files.migration.ts",
+    "seed:categories": "ts-node -r tsconfig-paths/register src/seeders/categories.seeder.ts"
   },
   "dependencies": {
     "@nestjs/common": "^11.0.1",

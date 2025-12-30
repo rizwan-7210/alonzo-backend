@@ -1,12 +1,10 @@
 import { Controller, Get, Param } from '@nestjs/common';
-import { ApiTags, ApiOperation, ApiResponse, ApiBearerAuth, ApiParam } from '@nestjs/swagger';
+import { ApiTags, ApiOperation, ApiResponse, ApiParam } from '@nestjs/swagger';
 import { CategoryService } from '../../admin/services/category.service';
-import { Roles } from 'src/common/decorators/roles.decorator';
-import { UserRole } from 'src/common/constants/user.constants';
+import { Public } from 'src/common/decorators/public.decorator';
 
 @ApiTags('User - Categories')
-@ApiBearerAuth()
-@Roles(UserRole.USER)
+@Public()
 @Controller('user/categories')
 export class UserCategoryController {
     constructor(private readonly categoryService: CategoryService) { }

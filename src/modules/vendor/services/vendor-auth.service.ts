@@ -30,7 +30,7 @@ export class VendorAuthService {
         pharmacyLicense?: Express.Multer.File,
         registrationCertificate?: Express.Multer.File,
     ) {
-        const { email, password, confirmPassword, firstName, lastName, phone, address } = registerDto;
+        const { email, password, confirmPassword, firstName, lastName, phone, dial_code, address, location, website, categoryId } = registerDto;
 
         if (password !== confirmPassword) {
             throw new BadRequestException('Passwords do not match');
@@ -54,6 +54,12 @@ export class VendorAuthService {
 
         const hashedPassword = await bcrypt.hash(password, 10);
 
+        // Normalize website URL - add https:// if protocol is missing
+        let normalizedWebsite = website?.trim();
+        if (normalizedWebsite && !normalizedWebsite.match(/^https?:\/\//i)) {
+            normalizedWebsite = `https://${normalizedWebsite}`;
+        }
+
         // Create vendor - explicitly set to VENDOR role
         const user = await this.userRepository.create({
             email: email.toLowerCase(),
@@ -61,15 +67,20 @@ export class VendorAuthService {
             lastName,
             password: hashedPassword,
             phone,
+            dial_code,
             address,
+            location,
+            website: normalizedWebsite,
+            categoryId: categoryId ? new Types.ObjectId(categoryId) : undefined,
             role: UserRole.VENDOR, // Explicitly set to VENDOR role
         });
 
         // Create Stripe customer
         try {
+            const fullName = lastName ? `${firstName} ${lastName}` : firstName;
             const stripeCustomerId = await this.stripeService.createCustomer(
                 email.toLowerCase(),
-                `${firstName} ${lastName}`,
+                fullName,
             );
             // Update user with Stripe customer ID
             await this.userRepository.update(user._id.toString(), { stripeCustomerId });
@@ -143,10 +154,11 @@ export class VendorAuthService {
             email: user.email,
         });
 
-        // Get user with profile image populated
+        // Get user with profile image and category populated
         const updatedUser = await this.userRepository.findById(user._id.toString());
         if (updatedUser) {
             await updatedUser.populate('profileImageFile');
+            await updatedUser.populate('category');
         }
 
         return {

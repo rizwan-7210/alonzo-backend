@@ -20,10 +20,21 @@ export class TransformInterceptor<T> implements NestInterceptor<T, Response<T>> 
                 // Convert ObjectIds to strings in the response data
                 const processedData = ObjectIdUtils.convertObjectIdsToStrings(data);
 
+                // Check if the response has a nested structure with message and data
+                if (processedData && typeof processedData === 'object' && 'message' in processedData && 'data' in processedData) {
+                    return {
+                        success: true,
+                        message: processedData.message,
+                        data: processedData.data,
+                        timestamp: now.toISOString(),
+                    };
+                }
+
+                // Default behavior: use the data as-is and extract message if it exists
                 return {
                     success: true,
-                    data: processedData,
                     message: processedData?.message || undefined,
+                    data: processedData,
                     timestamp: now.toISOString(),
                 };
             }),

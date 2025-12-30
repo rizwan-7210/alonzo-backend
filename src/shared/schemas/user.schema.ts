@@ -19,6 +19,11 @@ export type UserDocument = User & Document;
                 delete transformedRet._id;
             }
 
+            // Convert categoryId ObjectId to string
+            if (transformedRet.categoryId && typeof transformedRet.categoryId === 'object') {
+                transformedRet.categoryId = transformedRet.categoryId.toString();
+            }
+
             // Convert dates
             if (transformedRet.createdAt) {
                 transformedRet.createdAt = new Date(transformedRet.createdAt).toISOString();
@@ -140,6 +145,14 @@ UserSchema.virtual('files', {
 // Virtual for full name
 UserSchema.virtual('fullName').get(function () {
     return this.lastName ? `${this.firstName} ${this.lastName}` : this.firstName;
+});
+
+// Virtual for category relation
+UserSchema.virtual('category', {
+    ref: 'Category',
+    localField: 'categoryId',
+    foreignField: '_id',
+    justOne: true,
 });
 
 // Indexes
