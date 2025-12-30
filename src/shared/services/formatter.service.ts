@@ -1,9 +1,7 @@
 import { Injectable } from '@nestjs/common';
 import {
     BaseFormatter,
-    BookingFormatter,
     UserFormatter,
-    RescheduleRequestFormatter,
     InvoiceFormatter,
     ReviewFormatter,
     PaymentLogFormatter,
@@ -15,15 +13,6 @@ import {
  */
 @Injectable()
 export class FormatterService {
-    // Booking formatters
-    formatBooking(booking: any, includeReview = false, review?: any) {
-        return BookingFormatter.format(booking, includeReview, review);
-    }
-
-    formatBookingForListing(booking: any, index: number, page: number, limit: number) {
-        return BookingFormatter.formatForListing(booking, index, page, limit);
-    }
-
     // User formatters
     formatUser(user: any) {
         return UserFormatter.format(user);
@@ -31,15 +20,6 @@ export class FormatterService {
 
     formatUserForListing(user: any, index: number, page: number, limit: number) {
         return UserFormatter.formatForListing(user, index, page, limit);
-    }
-
-    // Reschedule request formatters
-    formatRescheduleRequest(request: any, includeBooking = false) {
-        return RescheduleRequestFormatter.format(request, includeBooking);
-    }
-
-    formatRescheduleRequestForListing(request: any, index: number, page: number, limit: number) {
-        return RescheduleRequestFormatter.formatForListing(request, index, page, limit);
     }
 
     // Invoice formatters

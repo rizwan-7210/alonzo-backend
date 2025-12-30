@@ -10,21 +10,26 @@ export class sanitizeUserUtils {
             delete userObj._id;
         }
 
-        // Handle avatarFile virtual field
-        if (userObj.avatarFile) {
-            // If avatarFile is populated, include it in the response
+        // Handle profileImageFile virtual field
+        if (userObj.profileImageFile) {
+            // If profileImageFile is populated, include it in the response
             // It will have its own url virtual from the File schema
-            // You can also add avatar as a convenience field
-            if (userObj.avatarFile.url) {
-                userObj.avatar = userObj.avatarFile.url;
-            } else if (userObj.avatarFile.path) {
-                userObj.avatar = `/uploads/${userObj.avatarFile.path}`;
+            if (userObj.profileImageFile.url) {
+                userObj.profileImage = userObj.profileImageFile.url;
+            } else if (userObj.profileImageFile.path) {
+                userObj.profileImage = `/uploads/${userObj.profileImageFile.path}`;
             }
-        } else if (userObj.avatar) {
-            // If no avatarFile but has avatar string, ensure it's a full URL
-            if (!userObj.avatar.startsWith('http') && !userObj.avatar.startsWith('/')) {
-                userObj.avatar = `/uploads/${userObj.avatar}`;
-            }
+        } else if (userObj.profileImage) {
+            // If profileImage is an ObjectId, it needs to be populated
+            // For now, set to null if not populated
+            userObj.profileImage = null;
+        } else {
+            userObj.profileImage = null;
+        }
+
+        // Backward compatibility: also set avatar field if profileImage exists
+        if (userObj.profileImage) {
+            userObj.avatar = userObj.profileImage;
         } else {
             userObj.avatar = null;
         }

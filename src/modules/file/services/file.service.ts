@@ -4,7 +4,7 @@ import { createWriteStream, existsSync, mkdirSync } from 'fs';
 import { join } from 'path';
 import { Types } from 'mongoose';
 import { FileRepository } from '../../../shared/repositories/file.repository';
-import { FileType, FileCategory, FileMimeTypes } from '../../../common/constants/file.constants';
+import { FileType, FileCategory, FileSubType, FileMimeTypes } from '../../../common/constants/file.constants';
 import { UserRepository } from '../../../shared/repositories/user.repository';
 import { NotificationService } from 'src/modules/notification/services/notification.service';
 
@@ -95,13 +95,18 @@ export class FileService {
             file,
             userId,
             'User',
-            FileCategory.AVATAR,
-            'User avatar',
+            FileCategory.PROFILE,
+            'User profile image',
             userId,
         );
 
-        // Update user's avatar field
-        await this.userRepository.update(userId, { avatar: fileRecord._id.toString() });
+        // Update file with subType
+        await this.fileRepository.update(fileRecord._id.toString(), {
+            subType: FileSubType.PROFILE_IMAGE,
+        });
+
+        // Update user's profileImage field
+        await this.userRepository.update(userId, { profileImage: fileRecord._id });
 
         return fileRecord;
     }

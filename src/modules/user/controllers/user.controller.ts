@@ -25,7 +25,7 @@ export class UserController {
     }
 
     @Put('profile')
-    @UseInterceptors(FileInterceptor('avatar', multerConfig))
+    @UseInterceptors(FileInterceptor('profileImage', multerConfig))
     @ApiConsumes('multipart/form-data')
     @ApiBody({ type: UpdateProfileDto })
     @ApiOperation({ summary: 'Update user profile' })
@@ -37,13 +37,13 @@ export class UserController {
             new ParseFilePipe({
                 fileIsRequired: false, // optional file
                 validators: [
-                    new MaxFileSizeValidator({ maxSize: 2 * 1024 * 1024 }), // 2MB
+                    new MaxFileSizeValidator({ maxSize: 5 * 1024 * 1024 }), // 5MB
                 ],
             }),
         )
-        avatar?: Express.Multer.File,
+        profileImage?: Express.Multer.File,
     ) {
-        return this.userService.updateProfile(user.id, updateProfileDto, avatar);
+        return this.userService.updateProfile(user.id, updateProfileDto, profileImage);
     }
 
     @Put('change-password')

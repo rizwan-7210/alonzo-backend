@@ -77,18 +77,18 @@ export class UserRepository extends BaseRepository<UserDocument> {
 
     // NEW METHODS FOR AVATAR AND FILE RELATIONSHIPS
 
-    async findByIdWithAvatar(id: string): Promise<UserDocument | null> {
+    async findByIdWithProfileImage(id: string): Promise<UserDocument | null> {
         return this.userModel
             .findById(new Types.ObjectId(id))
             .select('-password -refreshToken')
             .populate({
-                path: 'avatarFile',
+                path: 'profileImageFile',
                 select: 'name path mimeType size url',
             })
             .exec();
     }
 
-    async findByEmailWithAvatar(email: string): Promise<UserDocument | null> {
+    async findByEmailWithProfileImage(email: string): Promise<UserDocument | null> {
         if (!email) {
             return null;
         }
@@ -97,10 +97,19 @@ export class UserRepository extends BaseRepository<UserDocument> {
             .findOne({ email: email.toLowerCase().trim() })
             .select('-password -refreshToken')
             .populate({
-                path: 'avatarFile',
+                path: 'profileImageFile',
                 select: 'name path mimeType size url',
             })
             .exec();
+    }
+
+    // Keep for backward compatibility (deprecated)
+    async findByIdWithAvatar(id: string): Promise<UserDocument | null> {
+        return this.findByIdWithProfileImage(id);
+    }
+
+    async findByEmailWithAvatar(email: string): Promise<UserDocument | null> {
+        return this.findByEmailWithProfileImage(email);
     }
 
     async findUserWithFiles(id: string): Promise<UserDocument | null> {
@@ -108,7 +117,7 @@ export class UserRepository extends BaseRepository<UserDocument> {
             .findById(new Types.ObjectId(id))
             .select('-password -refreshToken')
             .populate({
-                path: 'avatarFile',
+                path: 'profileImageFile',
                 select: 'name path mimeType size url',
             })
             .populate({
@@ -126,7 +135,7 @@ export class UserRepository extends BaseRepository<UserDocument> {
             })
             .select('-password -refreshToken')
             .populate({
-                path: 'avatarFile',
+                path: 'profileImageFile',
                 select: 'name path mimeType size url',
             })
             .exec();
@@ -141,7 +150,7 @@ export class UserRepository extends BaseRepository<UserDocument> {
             )
             .select('-password -refreshToken')
             .populate({
-                path: 'avatarFile',
+                path: 'profileImageFile',
                 select: 'name path mimeType size url',
             })
             .exec();
@@ -152,7 +161,7 @@ export class UserRepository extends BaseRepository<UserDocument> {
             .findById(new Types.ObjectId(id))
             .select('-password -refreshToken')
             .populate({
-                path: 'avatarFile',
+                path: 'profileImageFile',
                 select: 'name path mimeType size url',
             })
             .populate({
@@ -168,7 +177,7 @@ export class UserRepository extends BaseRepository<UserDocument> {
             .findById(new Types.ObjectId(userId))
             .select('-password -refreshToken')
             .populate({
-                path: 'avatarFile',
+                path: 'profileImageFile',
                 select: 'name path mimeType size url',
             })
             .populate({
@@ -199,7 +208,7 @@ export class UserRepository extends BaseRepository<UserDocument> {
 
         if (includeAvatar) {
             dbQuery.populate({
-                path: 'avatarFile',
+                path: 'profileImageFile',
                 select: 'name path mimeType size url',
             });
         }
@@ -225,7 +234,7 @@ export class UserRepository extends BaseRepository<UserDocument> {
             )
             .select('-password -refreshToken')
             .populate({
-                path: 'avatarFile',
+                path: 'profileImageFile',
                 select: 'name path mimeType size url',
             })
             .exec();
@@ -251,7 +260,7 @@ export class UserRepository extends BaseRepository<UserDocument> {
 
         if (includeAvatar) {
             query.populate({
-                path: 'avatarFile',
+                path: 'profileImageFile',
                 select: 'name path mimeType size url',
             });
         }
@@ -270,7 +279,7 @@ export class UserRepository extends BaseRepository<UserDocument> {
 
         if (includeAvatar) {
             query.populate({
-                path: 'avatarFile',
+                path: 'profileImageFile',
                 select: 'name path mimeType size url',
             });
         }

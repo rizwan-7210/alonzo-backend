@@ -8,7 +8,7 @@ import { NotificationQueryDto } from '../dto/notification-query.dto';
 
 @ApiTags('Admin - Notifications')
 @ApiBearerAuth()
-@Roles(UserRole.ADMIN, UserRole.SUB_ADMIN)
+@Roles(UserRole.ADMIN)
 @Controller('admin/notifications')
 export class AdminNotificationController {
     constructor(private readonly adminNotificationService: AdminNotificationService) { }

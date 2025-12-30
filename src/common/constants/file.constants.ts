@@ -13,6 +13,12 @@ export enum FileCategory {
     ATTACHMENT = 'attachment',
 }
 
+export enum FileSubType {
+    PROFILE_IMAGE = 'profileImage',
+    PHARMACY_LICENSE = 'pharmacyLicense',
+    REGISTRATION_CERTIFICATE = 'registrationCertificate',
+}
+
 export const FileMimeTypes = {
     [FileType.IMAGE]: [
         'image/jpeg',

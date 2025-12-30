@@ -42,8 +42,13 @@ export class VendorRegisterDto {
     @IsOptional()
     address?: string;
 
-    @ApiProperty({ type: 'string', format: 'binary', required: false })
-    @IsOptional()
-    avatar?: any;
+    @ApiProperty({ type: 'string', format: 'binary', required: true, description: 'Profile image file' })
+    profileImage?: any;
+
+    @ApiProperty({ type: 'string', format: 'binary', required: true, description: 'Pharmacy license file' })
+    pharmacyLicense?: any;
+
+    @ApiProperty({ type: 'string', format: 'binary', required: true, description: 'Registration certificate file' })
+    registrationCertificate?: any;
 }
 

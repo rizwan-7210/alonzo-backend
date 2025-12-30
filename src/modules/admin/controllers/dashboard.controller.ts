@@ -8,7 +8,7 @@ import { UserRole, Permission } from '../../../common/constants/user.constants';
 
 @ApiTags('Admin - Dashboard')
 @ApiBearerAuth()
-@Roles(UserRole.ADMIN, UserRole.SUB_ADMIN)
+@Roles(UserRole.ADMIN)
 @RequirePermission(Permission.DASHBOARD_ACCESS)
 @Controller('admin/dashboard')
 export class DashboardController {
@@ -27,7 +27,6 @@ export class DashboardController {
                 totalSubscriptions: 33,
                 activeSubscriptions: 25,
                 totalUsers: 150,
-                totalBookings: 150,
                 recentGrowth: {
                     earnings: {
                         value: 12.5,
@@ -35,10 +34,6 @@ export class DashboardController {
                     },
                     subscriptions: {
                         value: 8.3,
-                        trend: 'up'
-                    },
-                    bookings: {
-                        value: 10.2,
                         trend: 'up'
                     }
                 }
@@ -126,42 +121,4 @@ export class DashboardController {
         return this.dashboardService.getSubscriptionsAnalytics(queryDto);
     }
 
-    @Get('bookings')
-    @ApiOperation({ summary: 'Get bookings analytics grouped by time period' })
-    @ApiQuery({ name: 'year', required: false, type: Number, example: 2024 })
-    @ApiQuery({ name: 'groupBy', required: false, enum: GroupBy, example: GroupBy.MONTH })
-    @ApiResponse({
-        status: 200,
-        description: 'Bookings analytics retrieved successfully',
-        schema: {
-            example: {
-                total: 150,
-                data: [
-                    {
-                        period: 'Jan 22',
-                        month: 1,
-                        year: 2022,
-                        count: 120,
-                        newBookings: 15,
-                        completedBookings: 10
-                    },
-                    {
-                        period: 'Feb 22',
-                        month: 2,
-                        year: 2022,
-                        count: 135,
-                        newBookings: 20,
-                        completedBookings: 12
-                    }
-                ],
-                growth: {
-                    percentage: 12.5,
-                    trend: 'up'
-                }
-            }
-        }
-    })
-    async getBookingsAnalytics(@Query() queryDto: DashboardQueryDto) {
-        return this.dashboardService.getBookingsAnalytics(queryDto);
-    }
 }

@@ -26,7 +26,7 @@ import { multerConfig } from '../../../config/multer.config';
 @ApiTags('Admin - Profile')
 @ApiBearerAuth()
 @UseGuards(JwtAuthGuard, RolesGuard)
-@Roles(UserRole.ADMIN, UserRole.SUB_ADMIN)
+@Roles(UserRole.ADMIN)
 @Controller('admin/profile')
 export class AdminProfileController {
     constructor(

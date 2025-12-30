@@ -8,7 +8,7 @@ import { LoginDto } from '../dto/login.dto';
 import { UserStatus, UserRole } from '../../../common/constants/user.constants';
 import { NotificationService } from 'src/modules/notification/services/notification.service';
 import { FileRepository } from 'src/shared/repositories/file.repository';
-import { FileType, FileCategory } from '../../../common/constants/file.constants';
+import { FileType, FileCategory, FileSubType } from '../../../common/constants/file.constants';
 import { Types } from "mongoose";
 import { sanitizeUserUtils } from 'src/common/utils/sanitize-user-utils';
 import { StripeService } from 'src/common/services/stripe.service';
@@ -24,7 +24,7 @@ export class UserAuthService {
         private readonly stripeService: StripeService,
     ) { }
 
-    async register(registerDto: RegisterDto, avatar?: Express.Multer.File) {
+    async register(registerDto: RegisterDto, profileImage?: Express.Multer.File) {
         const { email, password, confirmPassword, firstName, lastName, phone, address } = registerDto;
 
         if (password !== confirmPassword) {
@@ -58,23 +58,25 @@ export class UserAuthService {
         // Update user with Stripe customer ID
         await this.userRepository.update(user._id.toString(), { stripeCustomerId });
 
-        // ✔ Save avatar if uploaded
-        if (avatar) {
+        // Save profile image if uploaded
+        if (profileImage) {
             const savedFile = await this.fileRepository.create({
-                name: avatar.filename,
-                originalName: avatar.originalname,
-                path: avatar.filename,
-                mimeType: avatar.mimetype,
-                size: avatar.size,
+                name: profileImage.filename,
+                originalName: profileImage.originalname,
+                path: profileImage.filename,
+                mimeType: profileImage.mimetype,
+                size: profileImage.size,
                 type: FileType.IMAGE,
-                category: FileCategory.AVATAR,
+                category: FileCategory.PROFILE,
+                subType: FileSubType.PROFILE_IMAGE,
                 fileableId: new Types.ObjectId(user._id),
                 fileableType: 'User',
                 uploadedBy: new Types.ObjectId(user._id),
+                isActive: true,
             });
 
-            // update user avatar path
-            await this.userRepository.update(user._id.toString(), { avatar: savedFile.path });
+            // Update user with profile image reference
+            await this.userRepository.update(user._id.toString(), { profileImage: savedFile._id });
         }
 
         const tokens = await this.generateTokens(user._id.toString(), user.email, user.role);

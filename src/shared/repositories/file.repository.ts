@@ -63,52 +63,6 @@ export class FileRepository extends BaseRepository<FileDocument> {
         );
     }
 
-    async deactivateTutorialFile(tutorialId: string, fileType: FileType): Promise<void> {
-        await this.fileModel.updateMany(
-            {
-                fileableId: new Types.ObjectId(tutorialId),
-                fileableType: 'Tutorial',
-                type: fileType,
-                isActive: true,
-            },
-            {
-                isActive: false,
-                updatedAt: new Date()
-            }
-        );
-    }
-
-    async deleteTutorialFile(tutorialId: string, fileType: FileType): Promise<void> {
-        try {
-            // First, find files to get their paths
-            const filesToDelete = await this.fileModel.find({
-                fileableId: new Types.ObjectId(tutorialId),
-                fileableType: 'Tutorial',
-                type: fileType,
-            }).exec();
-
-            if (filesToDelete.length === 0) {
-                return;
-            }
-
-            // Delete from disk
-            await this.deleteFilesFromDisk(filesToDelete);
-
-            // Delete from database
-            await this.fileModel.deleteMany({
-                fileableId: new Types.ObjectId(tutorialId),
-                fileableType: 'Tutorial',
-                type: fileType,
-            });
-
-            this.logger.log(`Hard deleted ${filesToDelete.length} ${fileType} file(s) for tutorial ${tutorialId}`);
-
-        } catch (error) {
-            this.logger.error(`Failed to delete tutorial files: ${error.message}`, error.stack);
-            throw error;
-        }
-    }
-
     private async deleteFilesFromDisk(files: FileDocument[]): Promise<void> {
         const uploadsDir = path.join(process.cwd(), 'uploads');
 
@@ -181,13 +135,4 @@ export class FileRepository extends BaseRepository<FileDocument> {
         }
     }
 
-    async findTutorialFiles(tutorialId: string): Promise<FileDocument[]> {
-        return this.fileModel
-            .find({
-                fileableId: new Types.ObjectId(tutorialId),
-                fileableType: 'Tutorial',
-                isActive: true,
-            })
-            .exec();
-    }
 }

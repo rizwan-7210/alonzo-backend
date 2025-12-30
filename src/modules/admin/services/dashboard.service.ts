@@ -2,11 +2,9 @@ import { Injectable, Logger, InternalServerErrorException } from '@nestjs/common
 import { UserSubscriptionRepository } from '../../../shared/repositories/user-subscription.repository';
 import { PaymentLogRepository } from '../../../shared/repositories/payment-log.repository';
 import { UserRepository } from '../../../shared/repositories/user.repository';
-import { BookingRepository } from '../../../shared/repositories/booking.repository';
 import { DashboardQueryDto, GroupBy } from '../dto/dashboard-query.dto';
 import { PaymentStatus } from '../../../common/constants/payment.constants';
 import { SubscriptionStatus } from '../../../common/constants/subscription.constants';
-import { BookingStatus } from '../../../shared/schemas/booking.schema';
 
 @Injectable()
 export class DashboardService {
@@ -16,7 +14,6 @@ export class DashboardService {
         private readonly userSubscriptionRepository: UserSubscriptionRepository,
         private readonly paymentLogRepository: PaymentLogRepository,
         private readonly userRepository: UserRepository,
-        private readonly bookingRepository: BookingRepository,
     ) { }
 
     async getOverview() {
@@ -26,12 +23,11 @@ export class DashboardService {
             const succeededPayments = allPayments.filter(log => log.status === PaymentStatus.SUCCEEDED);
             const totalEarnings = succeededPayments.reduce((sum, log) => sum + (log.amount || 0), 0);
 
-            // Get subscription counts and booking counts
-            const [totalSubscriptions, activeSubscriptions, totalUsers, totalBookings] = await Promise.all([
+            // Get subscription counts
+            const [totalSubscriptions, activeSubscriptions, totalUsers] = await Promise.all([
                 this.userSubscriptionRepository.count({}),
                 this.userSubscriptionRepository.count({ status: SubscriptionStatus.ACTIVE }),
                 this.userRepository.count({}),
-                this.bookingRepository.count({}),
             ]);
 
             // Calculate growth (compare current month vs previous month)
@@ -72,27 +68,11 @@ export class DashboardService {
 
             const subscriptionsGrowth = this.calculateGrowth(currentMonthSubs, previousMonthSubs);
 
-            // Get all bookings for growth calculation
-            const allBookings = await this.bookingRepository.findAll();
-            
-            const currentMonthBookings = allBookings.filter(booking => {
-                const createdAt = new Date((booking as any).createdAt);
-                return createdAt >= currentMonthStart;
-            }).length;
-
-            const previousMonthBookings = allBookings.filter(booking => {
-                const createdAt = new Date((booking as any).createdAt);
-                return createdAt >= previousMonthStart && createdAt <= previousMonthEnd;
-            }).length;
-
-            const bookingsGrowth = this.calculateGrowth(currentMonthBookings, previousMonthBookings);
-
             return {
                 totalEarnings,
                 totalSubscriptions,
                 activeSubscriptions,
                 totalUsers,
-                totalBookings,
                 recentGrowth: {
                     earnings: {
                         value: earningsGrowth.percentage,
@@ -101,10 +81,6 @@ export class DashboardService {
                     subscriptions: {
                         value: subscriptionsGrowth.percentage,
                         trend: subscriptionsGrowth.trend
-                    },
-                    bookings: {
-                        value: bookingsGrowth.percentage,
-                        trend: bookingsGrowth.trend
                     }
                 }
             };
@@ -195,46 +171,7 @@ export class DashboardService {
         }
     }
 
-    async getBookingsAnalytics(queryDto: DashboardQueryDto) {
-        try {
-            const year = queryDto.year || new Date().getFullYear();
-            const groupBy = queryDto.groupBy || GroupBy.MONTH;
-
-            // Get all bookings
-            const allBookings = await this.bookingRepository.findAll();
-
-            // Group by period
-            const groupedData = this.groupDataByPeriod(allBookings, year, groupBy, 'bookings');
-
-            // Get current counts
-            const total = await this.bookingRepository.count({});
-
-            // Calculate growth (current year vs previous year)
-            const currentYearBookings = allBookings.filter(booking =>
-                new Date((booking as any).createdAt).getFullYear() === year
-            ).length;
-
-            const previousYearBookings = allBookings.filter(booking =>
-                new Date((booking as any).createdAt).getFullYear() === year - 1
-            ).length;
-
-            const growth = this.calculateGrowth(currentYearBookings, previousYearBookings);
-
-            return {
-                total,
-                data: groupedData,
-                growth: {
-                    percentage: growth.percentage,
-                    trend: growth.trend
-                }
-            };
-        } catch (error) {
-            this.logger.error(`Failed to get bookings analytics: ${error.message}`);
-            throw new InternalServerErrorException('Failed to retrieve bookings analytics');
-        }
-    }
-
-    private groupDataByPeriod(data: any[], year: number, groupBy: GroupBy, type: 'earnings' | 'subscriptions' | 'bookings') {
+    private groupDataByPeriod(data: any[], year: number, groupBy: GroupBy, type: 'earnings' | 'subscriptions') {
         const periods = this.generatePeriods(year, groupBy);
 
         return periods.map(period => {
@@ -276,32 +213,6 @@ export class DashboardService {
                     count: allSubsUpToPeriod.length,
                     newSubscriptions,
                     canceledSubscriptions
-                };
-            } else {
-                // For bookings, count new bookings in this period
-                const newBookings = periodData.length;
-
-                // Count completed bookings in this period
-                const completedBookings = periodData.filter(booking => {
-                    if (booking.status !== BookingStatus.COMPLETED) return false;
-                    // Check if booking was completed in this period
-                    // For simplicity, we'll use createdAt, but ideally we'd track completedAt
-                    return true;
-                }).length;
-
-                // Calculate cumulative count up to and including this period
-                const allBookingsUpToPeriod = data.filter(item => {
-                    const itemDate = new Date((item as any).createdAt);
-                    return this.isUpToPeriod(itemDate, period, groupBy);
-                });
-
-                return {
-                    period: this.formatPeriodLabel(period, groupBy),
-                    month: period.getMonth() + 1,
-                    year: period.getFullYear(),
-                    count: allBookingsUpToPeriod.length,
-                    newBookings,
-                    completedBookings
                 };
             }
         });

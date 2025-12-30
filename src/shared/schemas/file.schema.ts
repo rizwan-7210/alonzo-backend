@@ -1,7 +1,7 @@
 // shared/schemas/file.schema.ts
 import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose';
 import { Document, Types } from 'mongoose';
-import { FileType, FileCategory } from '../../common/constants/file.constants';
+import { FileType, FileCategory, FileSubType } from '../../common/constants/file.constants';
 
 export type FileDocument = File & Document;
 
@@ -63,6 +63,12 @@ export class File {
     })
     category: FileCategory;
 
+    @Prop({
+        type: String,
+        enum: Object.values(FileSubType),
+    })
+    subType?: FileSubType;
+
     @Prop({ type: String })
     description?: string;
 
@@ -108,7 +114,9 @@ FileSchema.virtual('fileable', {
 FileSchema.index({ fileableId: 1, fileableType: 1 });
 FileSchema.index({ type: 1 });
 FileSchema.index({ category: 1 });
+FileSchema.index({ subType: 1 });
 FileSchema.index({ uploadedBy: 1 });
 FileSchema.index({ createdAt: -1 });
 FileSchema.index({ isActive: 1 });
 FileSchema.index({ 'fileableId': 1, 'category': 1 }); // For quick avatar lookups
+FileSchema.index({ 'fileableId': 1, 'subType': 1 }); // For quick profile image lookups

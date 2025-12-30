@@ -1,6 +1,6 @@
-import { Controller, Post, Body, HttpCode, HttpStatus, UseInterceptors, UploadedFile, ParseFilePipe, MaxFileSizeValidator, BadRequestException } from '@nestjs/common';
+import { Controller, Post, Body, HttpCode, HttpStatus, UseInterceptors, UploadedFiles, BadRequestException } from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiResponse, ApiConsumes, ApiBody } from '@nestjs/swagger';
-import { FileInterceptor } from '@nestjs/platform-express';
+import { FileFieldsInterceptor } from '@nestjs/platform-express';
 import { VendorAuthService } from '../services/vendor-auth.service';
 import { VendorLoginDto } from '../dto/login.dto';
 import { VendorRegisterDto } from '../dto/register.dto';
@@ -14,25 +14,30 @@ export class VendorAuthController {
 
     @Public()
     @Post('register')
-    @UseInterceptors(FileInterceptor('avatar', multerConfig))
+    @UseInterceptors(FileFieldsInterceptor([
+        { name: 'profileImage', maxCount: 1 },
+        { name: 'pharmacyLicense', maxCount: 1 },
+        { name: 'registrationCertificate', maxCount: 1 },
+    ], multerConfig))
     @ApiConsumes('multipart/form-data')
     @ApiBody({ type: VendorRegisterDto })
     @ApiOperation({ summary: 'Register a new vendor' })
     @ApiResponse({ status: 201, description: 'Vendor successfully registered' })
     async register(
         @Body() registerDto: VendorRegisterDto,
-        @UploadedFile(
-            new ParseFilePipe({
-                fileIsRequired: false, // optional file
-                validators: [
-                    new MaxFileSizeValidator({ maxSize: 2 * 1024 * 1024 }), // 2MB
-                ],
-            }),
-        )
-        avatar?: Express.Multer.File,
+        @UploadedFiles() files: {
+            profileImage?: Express.Multer.File[];
+            pharmacyLicense?: Express.Multer.File[];
+            registrationCertificate?: Express.Multer.File[];
+        },
     ) {
         try {
-            return await this.vendorAuthService.register(registerDto, avatar);
+            return await this.vendorAuthService.register(
+                registerDto,
+                files.profileImage?.[0],
+                files.pharmacyLicense?.[0],
+                files.registrationCertificate?.[0],
+            );
         } catch (err) {
             throw new BadRequestException(err.message);
         }

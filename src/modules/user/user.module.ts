@@ -12,20 +12,12 @@ import { UserNotificationController } from './controllers/user-notification.cont
 import { SharedModule } from 'src/shared/shared.module';
 import { multerConfig } from 'src/config/multer.config';
 import { MulterModule } from '@nestjs/platform-express';
-import { TutorialController } from './controllers/tutorial.controller';
-import { TutorialService } from './services/tutorial.service';
 import { PlanController } from './controllers/plan.controller';
 import { PlanService } from './services/plan.service';
 
 import { UserNotificationService } from './services/user-notification.service';
 import { UserAvailabilityService } from './services/user-availability.service';
-import { UserBookingService } from './services/user-booking.service';
-import { BookingSchedulerService } from './services/booking-scheduler.service';
 import { UserAvailabilityController } from './controllers/user-availability.controller';
-import { UserBookingController } from './controllers/user-booking.controller';
-import { BookingRepository } from 'src/shared/repositories/booking.repository';
-import { Booking, BookingSchema } from 'src/shared/schemas/booking.schema';
-import { MongooseModule } from '@nestjs/mongoose';
 
 import { CommonModule } from 'src/common/common.module';
 import { PricingService } from './services/pricing.service';
@@ -42,31 +34,24 @@ import { CategoryModule } from '../category/category.module';
         FileModule,
         NotificationModule,
         CategoryModule, // Import CategoryModule to use CategoryService
-        MulterModule.register(multerConfig),
-        MongooseModule.forFeature([{ name: Booking.name, schema: BookingSchema }])
+        MulterModule.register(multerConfig)
     ],
     providers: [
         UserService,
         UserAuthService,
-        TutorialService,
         PlanService,
         UserNotificationService,
         UserAvailabilityService,
-        UserBookingService,
-        BookingSchedulerService,
         PricingService,
-        BookingRepository,
     ],
     controllers: [
         UserAuthController,
         UserController,
         UserFileController,
         UserNotificationController,
-        TutorialController,
         PlanController,
         UserAvailabilityController,
         PricingController,
-        UserBookingController,
         UserCategoryController
     ],
     exports: [UserAvailabilityService],

@@ -15,7 +15,7 @@ export class UserAuthController {
 
     @Public()
     @Post('register')
-    @UseInterceptors(FileInterceptor('avatar', multerConfig))
+    @UseInterceptors(FileInterceptor('profileImage', multerConfig))
     @ApiConsumes('multipart/form-data')
     @ApiBody({ type: RegisterDto })
     @ApiOperation({ summary: 'Register a new user' })
@@ -31,10 +31,10 @@ export class UserAuthController {
                 ],
             }),
         )
-        avatar?: Express.Multer.File,
+        profileImage?: Express.Multer.File,
     ) {
         try {
-            return await this.userAuthService.register(registerDto, avatar);
+            return await this.userAuthService.register(registerDto, profileImage);
         } catch (err) {
             throw new BadRequestException(err.message);
         }

@@ -106,8 +106,8 @@ export class User {
     @Prop({ type: String })
     deviceToken?: string;
 
-    @Prop({ type: String })
-    avatar?: string;
+    @Prop({ type: Types.ObjectId, ref: 'File' })
+    profileImage?: Types.ObjectId;
 
     @Prop({ type: String })
     stripeCustomerId?: string;
@@ -118,17 +118,12 @@ export class User {
 
 export const UserSchema = SchemaFactory.createForClass(User);
 
-// Virtual for avatar file (relation to File schema)
-UserSchema.virtual('avatarFile', {
+// Virtual for profile image file (relation to File schema)
+UserSchema.virtual('profileImageFile', {
     ref: 'File',
-    localField: '_id',
-    foreignField: 'fileableId',
+    localField: 'profileImage',
+    foreignField: '_id',
     justOne: true,
-    match: {
-        fileableType: 'User',
-        category: FileCategory.AVATAR,
-        isActive: true,
-    },
 });
 
 // Virtual for all user files

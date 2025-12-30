@@ -11,7 +11,7 @@ import { UserRepository } from '../../../shared/repositories/user.repository';
 import { FileRepository } from '../../../shared/repositories/file.repository';
 import { UpdateProfileDto } from '../dto/update-profile.dto';
 import { ChangePasswordDto } from '../dto/change-password.dto';
-import { FileCategory, FileType } from 'src/common/constants/file.constants';
+import { FileCategory, FileType, FileSubType } from 'src/common/constants/file.constants';
 import { Types } from 'mongoose';
 import * as fs from 'fs/promises';
 import * as path from 'path';
@@ -27,7 +27,7 @@ export class UserService {
     ) { }
 
     async getProfile(userId: string) {
-        const user = await this.userRepository.findById(userId);
+        const user = await this.userRepository.findByIdWithProfileImage(userId);
         if (!user) {
             throw new NotFoundException('User not found');
         }
@@ -39,7 +39,7 @@ export class UserService {
     async updateProfile(
         userId: string,
         updateProfileDto: UpdateProfileDto,
-        avatar?: Express.Multer.File
+        profileImage?: Express.Multer.File
     ) {
         try {
             const user = await this.userRepository.findById(userId);
@@ -56,25 +56,43 @@ export class UserService {
             }
 
             let updatedUser = await this.userRepository.update(userId, updateProfileDto);
-            if (avatar) {
-                await this.handleAvatarUpload(user, avatar);
+            if (profileImage) {
+                await this.handleProfileImageUpload(user, profileImage);
 
-                // Update user with new avatar URL
-                const avatarUrl = `/uploads/${avatar.filename}`;
+                // Create new profile image file
+                const savedFile = await this.fileRepository.create({
+                    name: profileImage.filename,
+                    originalName: profileImage.originalname,
+                    path: profileImage.filename,
+                    mimeType: profileImage.mimetype,
+                    size: profileImage.size,
+                    type: FileType.IMAGE,
+                    category: FileCategory.PROFILE,
+                    subType: FileSubType.PROFILE_IMAGE,
+                    fileableId: new Types.ObjectId(userId),
+                    fileableType: 'User',
+                    uploadedBy: new Types.ObjectId(userId),
+                    isActive: true,
+                });
+
+                // Update user with new profile image reference
                 updatedUser = await this.userRepository.update(userId, {
                     ...updateProfileDto,
-                    avatar: avatarUrl
+                    profileImage: savedFile._id
                 });
             } else {
-                // Update without avatar
+                // Update without profile image
                 updatedUser = await this.userRepository.update(userId, updateProfileDto);
             }
             if (!updatedUser) {
                 throw new InternalServerErrorException('Failed to update user profile');
             }
 
-            // Remove sensitive data before returning
-            // const { password, refreshToken, ...userProfile } = updatedUser.toObject();
+            // Populate profile image
+            if (updatedUser) {
+                await updatedUser.populate('profileImageFile');
+            }
+
             return sanitizeUserUtils.sanitizeUser(updatedUser);
         } catch (error) {
             this.logger.error(`Failed to update profile for user ${userId}: ${error.message}`);
@@ -83,99 +101,65 @@ export class UserService {
     }
 
 
-    private async handleAvatarUpload(user: any, newAvatar: Express.Multer.File): Promise<void> {
+    private async handleProfileImageUpload(user: any, newProfileImage: Express.Multer.File): Promise<void> {
         try {
-            // 1. Delete old avatar file from database
-            if (user.avatarFile) {
-                await this.deleteOldAvatar(user);
+            // 1. Delete old profile image file from database
+            if (user.profileImage) {
+                await this.deleteOldProfileImage(user);
             }
 
-            // 2. Delete old avatar file from file system
-            await this.deleteOldAvatarFileFromDisk(user);
+            // 2. Delete old profile image file from file system (if exists)
+            await this.deleteOldProfileImageFileFromDisk(user);
 
-            // 3. Create new avatar file record
-            await this.createNewAvatarFile(user, newAvatar);
+            // 3. Validate new profile image
+            await this.validateProfileImageFile(newProfileImage);
 
         } catch (error) {
-            this.logger.error(`Failed to handle avatar upload for user ${user._id}:`, error);
-            throw new BadRequestException('Failed to update avatar');
+            this.logger.error(`Failed to handle profile image upload for user ${user._id}:`, error);
+            throw new BadRequestException('Failed to update profile image');
         }
     }
 
-    private async deleteOldAvatar(user: any): Promise<void> {
+    private async deleteOldProfileImage(user: any): Promise<void> {
         try {
-            // Deactivate old avatar in database (soft delete)
-            await this.fileRepository.deactivateUserAvatar(user._id.toString());
-
-            // Optional: Hard delete old avatar record
-            // await this.fileRepository.deleteMany({
-            //     fileableId: new Types.ObjectId(user._id),
-            //     fileableType: 'User',
-            //     category: FileCategory.AVATAR,
-            // });
+            // Deactivate old profile image in database (soft delete)
+            if (user.profileImage) {
+                await this.fileRepository.update(user.profileImage.toString(), { isActive: false });
+            }
         } catch (error) {
-            this.logger.warn(`Failed to delete old avatar from database for user ${user._id}:`, error);
+            this.logger.warn(`Failed to delete old profile image from database for user ${user._id}:`, error);
             // Continue even if this fails
         }
     }
 
-    private async deleteOldAvatarFileFromDisk(user: any): Promise<void> {
+    private async deleteOldProfileImageFileFromDisk(user: any): Promise<void> {
         try {
-            if (!user.avatar) {
-                return;
-            }
+            // If user has profileImageFile populated, get the path
+            if (user.profileImageFile && user.profileImageFile.path) {
+                const oldFilename = user.profileImageFile.path;
+                const uploadsDir = path.join(process.cwd(), 'uploads');
+                const oldFilePath = path.join(uploadsDir, oldFilename);
 
-            // Extract filename from avatar URL
-            let oldFilename: string;
-            if (user.avatar.startsWith('/uploads/')) {
-                oldFilename = user.avatar.replace('/uploads/', '');
-            } else {
-                oldFilename = user.avatar;
-            }
-
-            // Construct full path to the file
-            const uploadsDir = path.join(process.cwd(), 'uploads');
-            const oldFilePath = path.join(uploadsDir, oldFilename);
-
-            // Check if file exists and delete it
-            try {
-                await fs.access(oldFilePath);
-                await fs.unlink(oldFilePath);
-                this.logger.log(`Deleted old avatar file: ${oldFilePath}`);
-            } catch (error) {
-                // File doesn't exist or can't be accessed - that's ok
-                this.logger.debug(`Old avatar file not found or already deleted: ${oldFilePath}`);
+                // Check if file exists and delete it
+                try {
+                    await fs.access(oldFilePath);
+                    await fs.unlink(oldFilePath);
+                    this.logger.log(`Deleted old profile image file: ${oldFilePath}`);
+                } catch (error) {
+                    // File doesn't exist or can't be accessed - that's ok
+                    this.logger.debug(`Old profile image file not found or already deleted: ${oldFilePath}`);
+                }
             }
         } catch (error) {
-            this.logger.warn(`Failed to delete old avatar file from disk for user ${user._id}:`, error);
+            this.logger.warn(`Failed to delete old profile image file from disk for user ${user._id}:`, error);
             // Continue even if this fails
         }
     }
 
-    private async createNewAvatarFile(user: any, newAvatar: Express.Multer.File): Promise<void> {
-        // Validate new avatar
-        await this.validateAvatarFile(newAvatar);
-
-        // Create new avatar file record
-        await this.fileRepository.create({
-            name: newAvatar.filename,
-            originalName: newAvatar.originalname,
-            path: newAvatar.filename,
-            mimeType: newAvatar.mimetype,
-            size: newAvatar.size,
-            type: FileType.IMAGE,
-            category: FileCategory.AVATAR,
-            fileableId: new Types.ObjectId(user._id),
-            fileableType: 'User',
-            uploadedBy: new Types.ObjectId(user._id),
-            isActive: true,
-        });
-    }
-
-    private async validateAvatarFile(avatar: Express.Multer.File): Promise<void> {
+    private async validateProfileImageFile(profileImage: Express.Multer.File): Promise<void> {
         // Validate file type
         const allowedMimeTypes = ['image/jpeg', 'image/jpg', 'image/png', 'image/webp', 'image/gif'];
-        if (!allowedMimeTypes.includes(avatar.mimetype)) {
+        if (!allowedMimeTypes.includes(profileImage.mimetype)) {
             throw new BadRequestException(
                 `Invalid file type. Allowed types: ${allowedMimeTypes.join(', ')}`
             );
@@ -183,7 +167,7 @@ export class UserService {
 
         // Validate file size (max 5MB)
         const maxSize = 5 * 1024 * 1024; // 5MB
-        if (avatar.size > maxSize) {
+        if (profileImage.size > maxSize) {
             throw new BadRequestException(
                 `File too large. Maximum size is ${maxSize / (1024 * 1024)}MB`
             );

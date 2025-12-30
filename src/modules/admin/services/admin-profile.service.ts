@@ -9,7 +9,6 @@ import {
 import * as bcrypt from 'bcryptjs';
 import { UserRepository } from '../../../shared/repositories/user.repository';
 import { FileRepository } from '../../../shared/repositories/file.repository';
-import { SubAdminPermissionRepository } from '../../../shared/repositories/sub-admin-permission.repository';
 import { UpdateAdminProfileDto } from '../dto/update-admin-profile.dto';
 import { ChangeAdminPasswordDto } from '../dto/change-admin-password.dto';
 import { FileCategory, FileType } from '../../../common/constants/file.constants';
@@ -26,7 +25,6 @@ export class AdminProfileService {
     constructor(
         private readonly userRepository: UserRepository,
         private readonly fileRepository: FileRepository,
-        private readonly subAdminPermissionRepository: SubAdminPermissionRepository,
     ) { }
 
     async getProfile(adminId: string) {
@@ -35,29 +33,7 @@ export class AdminProfileService {
             throw new NotFoundException('Admin not found');
         }
 
-        const userData = sanitizeUserUtils.sanitizeUser(admin);
-
-        // Get permissions if user is a sub-admin
-        let permissions: { permissions: string[]; rights: string | null } | null = null;
-        if (admin.role === UserRole.SUB_ADMIN) {
-            const subAdminPermissions = await this.subAdminPermissionRepository.findBySubAdminId(adminId);
-            if (subAdminPermissions) {
-                permissions = {
-                    permissions: subAdminPermissions.permissions || [],
-                    rights: subAdminPermissions.rights || null,
-                };
-            } else {
-                permissions = {
-                    permissions: [],
-                    rights: null,
-                };
-            }
-        }
-
-        return {
-            ...userData,
-            permissions,
-        };
+        return sanitizeUserUtils.sanitizeUser(admin);
     }
 
     async updateProfile(

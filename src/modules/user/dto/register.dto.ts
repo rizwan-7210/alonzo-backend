@@ -42,7 +42,7 @@ export class RegisterDto {
     @IsOptional()
     address?: string;
 
-    @ApiProperty({ type: 'string', format: 'binary', required: false })
+    @ApiProperty({ type: 'string', format: 'binary', required: false, description: 'Profile image file' })
     @IsOptional()
-    avatar?: any;
+    profileImage?: any;
 }

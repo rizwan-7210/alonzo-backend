@@ -22,7 +22,7 @@ import { SlotType } from '../../../common/constants/availability.constants';
 
 @ApiTags('Admin - Availability')
 @ApiBearerAuth()
-@Roles(UserRole.ADMIN, UserRole.SUB_ADMIN)
+@Roles(UserRole.ADMIN)
 @RequirePermission(Permission.AVAILABILITY_MANAGEMENT)
 @Controller('admin/availability')
 export class AvailabilityController {

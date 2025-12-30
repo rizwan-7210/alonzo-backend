@@ -10,7 +10,7 @@ import { sanitizeUserUtils } from '../../../common/utils/sanitize-user-utils';
 import { StripeService } from '../../../common/services/stripe.service';
 import { NotificationService } from 'src/modules/notification/services/notification.service';
 import { FileRepository } from 'src/shared/repositories/file.repository';
-import { FileType, FileCategory } from '../../../common/constants/file.constants';
+import { FileType, FileCategory, FileSubType } from '../../../common/constants/file.constants';
 import { Types } from "mongoose";
 
 @Injectable()
@@ -24,11 +24,27 @@ export class VendorAuthService {
         private readonly notificationService: NotificationService,
     ) { }
 
-    async register(registerDto: VendorRegisterDto, avatar?: Express.Multer.File) {
+    async register(
+        registerDto: VendorRegisterDto,
+        profileImage?: Express.Multer.File,
+        pharmacyLicense?: Express.Multer.File,
+        registrationCertificate?: Express.Multer.File,
+    ) {
         const { email, password, confirmPassword, firstName, lastName, phone, address } = registerDto;
 
         if (password !== confirmPassword) {
             throw new BadRequestException('Passwords do not match');
+        }
+
+        // Validate required files for vendor registration
+        if (!profileImage) {
+            throw new BadRequestException('Profile image is required');
+        }
+        if (!pharmacyLicense) {
+            throw new BadRequestException('Pharmacy license is required');
+        }
+        if (!registrationCertificate) {
+            throw new BadRequestException('Registration certificate is required');
         }
 
         const existingUser = await this.userRepository.findByEmail(email);
@@ -62,24 +78,60 @@ export class VendorAuthService {
             console.warn('Failed to create Stripe customer for vendor:', error);
         }
 
-        // Save avatar if uploaded
-        if (avatar) {
-            const savedFile = await this.fileRepository.create({
-                name: avatar.filename,
-                originalName: avatar.originalname,
-                path: avatar.filename,
-                mimeType: avatar.mimetype,
-                size: avatar.size,
-                type: FileType.IMAGE,
-                category: FileCategory.AVATAR,
-                fileableId: new Types.ObjectId(user._id),
-                fileableType: 'User',
-                uploadedBy: new Types.ObjectId(user._id),
-            });
+        const userId = new Types.ObjectId(user._id);
 
-            // update user avatar path
-            await this.userRepository.update(user._id.toString(), { avatar: savedFile.path });
-        }
+        // Save profile image
+        const profileImageFile = await this.fileRepository.create({
+            name: profileImage.filename,
+            originalName: profileImage.originalname,
+            path: profileImage.filename,
+            mimeType: profileImage.mimetype,
+            size: profileImage.size,
+            type: FileType.IMAGE,
+            category: FileCategory.PROFILE,
+            subType: FileSubType.PROFILE_IMAGE,
+            fileableId: userId,
+            fileableType: 'User',
+            uploadedBy: userId,
+            isActive: true,
+        });
+
+        // Save pharmacy license
+        await this.fileRepository.create({
+            name: pharmacyLicense.filename,
+            originalName: pharmacyLicense.originalname,
+            path: pharmacyLicense.filename,
+            mimeType: pharmacyLicense.mimetype,
+            size: pharmacyLicense.size,
+            type: FileType.DOCUMENT,
+            category: FileCategory.DOCUMENT,
+            subType: FileSubType.PHARMACY_LICENSE,
+            fileableId: userId,
+            fileableType: 'User',
+            uploadedBy: userId,
+            isActive: true,
+        });
+
+        // Save registration certificate
+        await this.fileRepository.create({
+            name: registrationCertificate.filename,
+            originalName: registrationCertificate.originalname,
+            path: registrationCertificate.filename,
+            mimeType: registrationCertificate.mimetype,
+            size: registrationCertificate.size,
+            type: FileType.DOCUMENT,
+            category: FileCategory.DOCUMENT,
+            subType: FileSubType.REGISTRATION_CERTIFICATE,
+            fileableId: userId,
+            fileableType: 'User',
+            uploadedBy: userId,
+            isActive: true,
+        });
+
+        // Update user with profile image reference
+        await this.userRepository.update(user._id.toString(), {
+            profileImage: profileImageFile._id,
+        });
 
         const tokens = await this.generateTokens(user._id.toString(), user.email, user.role);
         await this.userRepository.updateRefreshToken(user._id.toString(), tokens.refreshToken);
@@ -90,7 +142,12 @@ export class VendorAuthService {
             lastName: user.lastName,
             email: user.email,
         });
-        const updatedUser = await this.userRepository.findByEmailWithAvatar(email);
+
+        // Get user with profile image populated
+        const updatedUser = await this.userRepository.findById(user._id.toString());
+        if (updatedUser) {
+            await updatedUser.populate('profileImageFile');
+        }
 
         return {
             user: sanitizeUserUtils.sanitizeUser(updatedUser),
@@ -140,7 +197,12 @@ export class VendorAuthService {
         // Generate tokens
         const tokens = await this.generateTokens(user._id.toString(), user.email, user.role);
         await this.userRepository.updateRefreshToken(user._id.toString(), tokens.refreshToken);
-        const updatedUser = await this.userRepository.findByEmailWithAvatar(email);
+        
+        // Get user with profile image populated
+        const updatedUser = await this.userRepository.findByEmailWithProfileImage(email);
+        if (updatedUser) {
+            await updatedUser.populate('profileImageFile');
+        }
 
         return {
             user: sanitizeUserUtils.sanitizeUser(updatedUser),

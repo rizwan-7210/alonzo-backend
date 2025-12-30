@@ -9,7 +9,7 @@ import { PaymentLogQueryDto } from '../dto/payment-log-query.dto';
 
 @ApiTags('Admin - Subscription Logs')
 @ApiBearerAuth()
-@Roles(UserRole.ADMIN, UserRole.SUB_ADMIN)
+@Roles(UserRole.ADMIN)
 @RequirePermission(Permission.SUBSCRIPTION_MANAGEMENT)
 @Controller('admin/subscription-logs')
 export class SubscriptionLogController {

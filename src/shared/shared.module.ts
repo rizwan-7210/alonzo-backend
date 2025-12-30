@@ -10,8 +10,6 @@ import { NotificationRepository } from './repositories/notification.repository';
 import { ContactRepository } from './repositories/contact.repository';
 import { PasswordReset, PasswordResetSchema } from './schemas/password-reset.schema';
 import { PasswordResetRepository } from './repositories/password-reset.repository';
-import { Tutorial, TutorialSchema } from './schemas/tutorial.schema';
-import { TutorialRepository } from './repositories/tutorial.repository';
 import { Plan, PlanSchema } from './schemas/plan.schema';
 import { UserSubscription, UserSubscriptionSchema } from './schemas/user-subscription.schema';
 import { PlanRepository } from './repositories/plan.repository';
@@ -24,16 +22,10 @@ import { Pricing, PricingSchema } from './schemas/pricing.schema';
 import { PricingLog, PricingLogSchema } from './schemas/pricing-log.schema';
 import { PricingRepository } from './repositories/pricing.repository';
 import { PricingLogRepository } from './repositories/pricing-log.repository';
-import { RescheduleRequest, RescheduleRequestSchema } from './schemas/reschedule-request.schema';
-import { RescheduleRequestRepository } from './repositories/reschedule-request.repository';
-import { Booking, BookingSchema } from './schemas/booking.schema';
-import { BookingRepository } from './repositories/booking.repository';
 import { Review, ReviewSchema } from './schemas/review.schema';
 import { ReviewRepository } from './repositories/review.repository';
 import { Invoice, InvoiceSchema } from './schemas/invoice.schema';
 import { InvoiceRepository } from './repositories/invoice.repository';
-import { SubAdminPermission, SubAdminPermissionSchema } from './schemas/sub-admin-permission.schema';
-import { SubAdminPermissionRepository } from './repositories/sub-admin-permission.repository';
 import { NonUserInvoice, NonUserInvoiceSchema } from './schemas/non-user-invoice.schema';
 import { NonUserInvoiceRepository } from './repositories/non-user-invoice.repository';
 import { Category, CategorySchema } from './schemas/category.schema';
@@ -48,23 +40,19 @@ import { FormatterService } from './services/formatter.service';
             { name: Notification.name, schema: NotificationSchema },
             { name: Contact.name, schema: ContactSchema },
             { name: PasswordReset.name, schema: PasswordResetSchema },
-            { name: Tutorial.name, schema: TutorialSchema },
             { name: Plan.name, schema: PlanSchema },
             { name: UserSubscription.name, schema: UserSubscriptionSchema },
             { name: PaymentLog.name, schema: PaymentLogSchema },
             { name: Availability.name, schema: AvailabilitySchema },
             { name: Pricing.name, schema: PricingSchema },
             { name: PricingLog.name, schema: PricingLogSchema },
-            { name: RescheduleRequest.name, schema: RescheduleRequestSchema },
-            { name: Booking.name, schema: BookingSchema },
             { name: Review.name, schema: ReviewSchema },
             { name: Invoice.name, schema: InvoiceSchema },
-            { name: SubAdminPermission.name, schema: SubAdminPermissionSchema },
             { name: NonUserInvoice.name, schema: NonUserInvoiceSchema },
             { name: Category.name, schema: CategorySchema },
         ]),
     ],
-    providers: [UserRepository, FileRepository, NotificationRepository, ContactRepository, PasswordResetRepository, TutorialRepository, PlanRepository, UserSubscriptionRepository, PaymentLogRepository, AvailabilityRepository, PricingRepository, PricingLogRepository, RescheduleRequestRepository, BookingRepository, ReviewRepository, InvoiceRepository, SubAdminPermissionRepository, NonUserInvoiceRepository, CategoryRepository, FormatterService],
-    exports: [MongooseModule, UserRepository, FileRepository, NotificationRepository, ContactRepository, PasswordResetRepository, TutorialRepository, PlanRepository, UserSubscriptionRepository, PaymentLogRepository, AvailabilityRepository, PricingRepository, PricingLogRepository, RescheduleRequestRepository, BookingRepository, ReviewRepository, InvoiceRepository, SubAdminPermissionRepository, NonUserInvoiceRepository, CategoryRepository, FormatterService],
+    providers: [UserRepository, FileRepository, NotificationRepository, ContactRepository, PasswordResetRepository, PlanRepository, UserSubscriptionRepository, PaymentLogRepository, AvailabilityRepository, PricingRepository, PricingLogRepository, ReviewRepository, InvoiceRepository, NonUserInvoiceRepository, CategoryRepository, FormatterService],
+    exports: [MongooseModule, UserRepository, FileRepository, NotificationRepository, ContactRepository, PasswordResetRepository, PlanRepository, UserSubscriptionRepository, PaymentLogRepository, AvailabilityRepository, PricingRepository, PricingLogRepository, ReviewRepository, InvoiceRepository, NonUserInvoiceRepository, CategoryRepository, FormatterService],
 })
 export class SharedModule { }

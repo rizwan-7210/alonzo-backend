@@ -4,13 +4,11 @@ import { ROLES_KEY } from '../decorators/roles.decorator';
 import { PERMISSIONS_KEY } from '../decorators/permissions.decorator';
 import { IS_PUBLIC_KEY } from '../decorators/public.decorator';
 import { UserRole, Permission } from '../constants/user.constants';
-import { SubAdminPermissionRepository } from '../../shared/repositories/sub-admin-permission.repository';
 
 @Injectable()
 export class RolesGuard implements CanActivate {
     constructor(
         private reflector: Reflector,
-        private readonly subAdminPermissionRepository: SubAdminPermissionRepository,
     ) { }
 
     async canActivate(context: ExecutionContext): Promise<boolean> {
@@ -60,7 +58,6 @@ export class RolesGuard implements CanActivate {
         // Normalize role to string for comparison
         const userRole = String(user.role);
         const isAdmin = userRole === UserRole.ADMIN || userRole === 'admin';
-        const isSubAdmin = userRole === UserRole.SUB_ADMIN || userRole === 'sub_admin';
 
         // Allow ADMIN to access all admin endpoints
         if (isAdmin) {
@@ -74,24 +71,6 @@ export class RolesGuard implements CanActivate {
                 return userRole === roleStr || userRole === role;
             });
             if (!hasRole) {
-                throw new ForbiddenException('Insufficient permissions');
-            }
-        }
-
-        // For sub-admins, check permissions if required
-        if (isSubAdmin && requiredPermissions && requiredPermissions.length > 0) {
-            const subAdminPermissions = await this.subAdminPermissionRepository.findBySubAdminId(user.id);
-            
-            if (!subAdminPermissions || !subAdminPermissions.permissions) {
-                throw new ForbiddenException('Insufficient permissions');
-            }
-
-            // Check if sub-admin has at least one of the required permissions
-            const hasPermission = requiredPermissions.some(requiredPerm => 
-                subAdminPermissions.permissions.includes(requiredPerm)
-            );
-
-            if (!hasPermission) {
                 throw new ForbiddenException('Insufficient permissions');
             }
         }

@@ -11,8 +11,7 @@ import { NonUserInvoiceQueryDto } from '../dto/non-user-invoice-query.dto';
 
 @ApiTags('Admin - Non User Invoices')
 @ApiBearerAuth()
-@Roles(UserRole.ADMIN, UserRole.SUB_ADMIN)
-@RequirePermission(Permission.BOOKING_MANAGEMENT)
+@Roles(UserRole.ADMIN)
 @Controller('admin/non-user-invoices')
 export class NonUserInvoiceController {
     constructor(private readonly nonUserInvoiceService: NonUserInvoiceService) { }

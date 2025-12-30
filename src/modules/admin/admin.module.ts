@@ -14,8 +14,6 @@ import { AdminNotificationController } from './controllers/admin-notification.co
 import { AdminProfileController } from './controllers/admin-profile.controller';
 import { DashboardController } from './controllers/dashboard.controller';
 import { SharedModule } from 'src/shared/shared.module';
-import { TutorialController } from './controllers/tutorial.controller';
-import { TutorialService } from './services/tutorial.service';
 import { PlanController } from './controllers/plan.controller';
 import { PlanService } from './services/plan.service';
 import { SubscriptionLogController } from './controllers/subscription-log.controller';
@@ -25,12 +23,6 @@ import { AvailabilityController } from './controllers/availability.controller';
 import { PricingService } from './services/pricing.service';
 import { PricingController } from './controllers/pricing.controller';
 import { AdminNotificationService } from './services/admin-notification.service';
-import { RescheduleRequestService } from './services/reschedule-request.service';
-import { RescheduleRequestController } from './controllers/reschedule-request.controller';
-import { AdminBookingService } from './services/booking.service';
-import { AdminBookingController } from './controllers/booking.controller';
-import { SubAdminService } from './services/sub-admin.service';
-import { SubAdminController } from './controllers/sub-admin.controller';
 import { NonUserInvoiceService } from './services/non-user-invoice.service';
 import { NonUserInvoiceController } from './controllers/non-user-invoice.controller';
 import { StripeWebhookController } from './controllers/stripe-webhook.controller';
@@ -48,15 +40,11 @@ import { CategoryModule } from '../category/category.module';
         UserManagementService,
         AdminProfileService,
         DashboardService,
-        TutorialService,
         PlanService,
         SubscriptionLogService,
         AvailabilityService,
         PricingService,
         AdminNotificationService,
-        RescheduleRequestService,
-        AdminBookingService,
-        SubAdminService,
         NonUserInvoiceService,
         CategoryService
     ],
@@ -68,14 +56,10 @@ import { CategoryModule } from '../category/category.module';
         AdminNotificationController,
         AdminProfileController,
         DashboardController,
-        TutorialController,
         PlanController,
         SubscriptionLogController,
         AvailabilityController,
         PricingController,
-        RescheduleRequestController,
-        AdminBookingController,
-        SubAdminController,
         NonUserInvoiceController,
         StripeWebhookController,
         AdminCategoryController

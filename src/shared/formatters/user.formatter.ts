@@ -41,17 +41,22 @@ export class UserFormatter {
             response.fullName = `${response.firstName} ${response.lastName}`;
         }
 
-        // Handle avatar file if populated
-        if (userObj.avatarFile) {
-            const avatarObj = BaseFormatter.toPlainObject(userObj.avatarFile);
-            response.avatarFile = {
-                id: BaseFormatter.objectIdToString(avatarObj._id),
-                name: avatarObj.name,
-                path: avatarObj.path,
-                url: avatarObj.url,
-                mimeType: avatarObj.mimeType,
-                size: avatarObj.size,
+        // Handle profile image file if populated
+        if (userObj.profileImageFile) {
+            const profileImageObj = BaseFormatter.toPlainObject(userObj.profileImageFile);
+            response.profileImage = {
+                id: BaseFormatter.objectIdToString(profileImageObj._id),
+                name: profileImageObj.name,
+                path: profileImageObj.path,
+                url: profileImageObj.url,
+                mimeType: profileImageObj.mimeType,
+                size: profileImageObj.size,
             };
+            // Backward compatibility
+            response.avatar = response.profileImage.url || `/uploads/${response.profileImage.path}`;
+        } else if (userObj.profileImage) {
+            // If profileImage is an ObjectId but not populated
+            response.profileImage = BaseFormatter.objectIdToString(userObj.profileImage);
         }
 
         // Convert timestamps

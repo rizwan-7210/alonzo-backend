@@ -46,7 +46,6 @@ export async function addVendorRoleMigration() {
             admin: await userRepository.count({ role: UserRole.ADMIN }),
             vendor: await userRepository.count({ role: UserRole.VENDOR }),
             user: await userRepository.count({ role: UserRole.USER }),
-            sub_admin: await userRepository.count({ role: UserRole.SUB_ADMIN }),
         };
 
         console.log('✅ Migration completed successfully!');
@@ -54,7 +53,6 @@ export async function addVendorRoleMigration() {
         console.log(`   - Admin: ${roleCounts.admin}`);
         console.log(`   - Vendor: ${roleCounts.vendor}`);
         console.log(`   - User: ${roleCounts.user}`);
-        console.log(`   - Sub-Admin: ${roleCounts.sub_admin}`);
         console.log(`   - Updated: ${updatedCount} users`);
 
         await app.close();
