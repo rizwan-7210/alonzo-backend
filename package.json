@@ -22,7 +22,8 @@
     "migration:create-categories": "ts-node -r tsconfig-paths/register src/migrations/create-categories.migration.ts",
     "migration:create-products": "ts-node -r tsconfig-paths/register src/migrations/create-products.migration.ts",
     "migration:migrate-avatars-to-files": "ts-node -r tsconfig-paths/register src/migrations/migrate-avatars-to-files.migration.ts",
-    "seed:categories": "ts-node -r tsconfig-paths/register src/seeders/categories.seeder.ts"
+    "seed:categories": "ts-node -r tsconfig-paths/register src/seeders/categories.seeder.ts",
+    "seed:admin": "ts-node -r tsconfig-paths/register src/seeders/admin.seeder.ts"
   },
   "dependencies": {
     "@nestjs/common": "^11.0.1",

@@ -3,10 +3,12 @@ import { JwtModule } from '@nestjs/jwt';
 import { ConfigModule } from '@nestjs/config';
 import { ContactModule } from '../contact/contact.module';
 import { AdminAuthService } from './services/admin-auth.service';
+import { AdminPasswordResetService } from './services/admin-password-reset.service';
 import { UserManagementService } from './services/user-management.service';
 import { AdminProfileService } from './services/admin-profile.service';
 import { DashboardService } from './services/dashboard.service';
 import { AdminAuthController } from './controllers/admin-auth.controller';
+import { AdminPasswordResetController } from './controllers/admin-password-reset.controller';
 import { AdminUserController } from './controllers/admin-user.controller';
 import { AdminContactController } from './controllers/admin-contact.controller';
 import { AdminFileController } from './controllers/admin-file.controller';
@@ -31,6 +33,7 @@ import { CategoryModule } from '../category/category.module';
     imports: [SharedModule, CommonModule, ConfigModule, JwtModule, ContactModule, NotificationModule, UserModule, CategoryModule],
     providers: [
         AdminAuthService,
+        AdminPasswordResetService,
         UserManagementService,
         AdminProfileService,
         DashboardService,
@@ -41,6 +44,7 @@ import { CategoryModule } from '../category/category.module';
     ],
     controllers: [
         AdminAuthController,
+        AdminPasswordResetController,
         AdminUserController,
         AdminContactController,
         AdminFileController,
