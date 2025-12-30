@@ -22,6 +22,8 @@ import { Invoice, InvoiceSchema } from './schemas/invoice.schema';
 import { InvoiceRepository } from './repositories/invoice.repository';
 import { Category, CategorySchema } from './schemas/category.schema';
 import { CategoryRepository } from './repositories/category.repository';
+import { Product, ProductSchema } from './schemas/product.schema';
+import { ProductRepository } from './repositories/product.repository';
 import { FormatterService } from './services/formatter.service';
 
 @Module({
@@ -38,9 +40,10 @@ import { FormatterService } from './services/formatter.service';
             { name: Review.name, schema: ReviewSchema },
             { name: Invoice.name, schema: InvoiceSchema },
             { name: Category.name, schema: CategorySchema },
+            { name: Product.name, schema: ProductSchema },
         ]),
     ],
-    providers: [UserRepository, FileRepository, NotificationRepository, ContactRepository, PasswordResetRepository, PlanRepository, UserSubscriptionRepository, PaymentLogRepository, ReviewRepository, InvoiceRepository, CategoryRepository, FormatterService],
-    exports: [MongooseModule, UserRepository, FileRepository, NotificationRepository, ContactRepository, PasswordResetRepository, PlanRepository, UserSubscriptionRepository, PaymentLogRepository, ReviewRepository, InvoiceRepository, CategoryRepository, FormatterService],
+    providers: [UserRepository, FileRepository, NotificationRepository, ContactRepository, PasswordResetRepository, PlanRepository, UserSubscriptionRepository, PaymentLogRepository, ReviewRepository, InvoiceRepository, CategoryRepository, ProductRepository, FormatterService],
+    exports: [MongooseModule, UserRepository, FileRepository, NotificationRepository, ContactRepository, PasswordResetRepository, PlanRepository, UserSubscriptionRepository, PaymentLogRepository, ReviewRepository, InvoiceRepository, CategoryRepository, ProductRepository, FormatterService],
 })
 export class SharedModule { }

@@ -4,8 +4,10 @@ import { ConfigModule } from '@nestjs/config';
 import { VendorAuthController } from './controllers/vendor-auth.controller';
 import { VendorCategoryController } from './controllers/vendor-category.controller';
 import { VendorPasswordResetController } from './controllers/vendor-password-reset.controller';
+import { VendorDashboardController } from './controllers/vendor-dashboard.controller';
 import { VendorAuthService } from './services/vendor-auth.service';
 import { VendorPasswordResetService } from './services/vendor-password-reset.service';
+import { VendorDashboardService } from './services/vendor-dashboard.service';
 import { SharedModule } from '../../shared/shared.module';
 import { CommonModule } from '../../common/common.module';
 import { NotificationModule } from '../notification/notification.module';
@@ -20,9 +22,9 @@ import { CategoryModule } from '../category/category.module';
         ConfigModule,
         JwtModule.register({}),
     ],
-    controllers: [VendorAuthController, VendorCategoryController, VendorPasswordResetController],
-    providers: [VendorAuthService, VendorPasswordResetService],
-    exports: [VendorAuthService, VendorPasswordResetService],
+    controllers: [VendorAuthController, VendorCategoryController, VendorPasswordResetController, VendorDashboardController],
+    providers: [VendorAuthService, VendorPasswordResetService, VendorDashboardService],
+    exports: [VendorAuthService, VendorPasswordResetService, VendorDashboardService],
 })
 export class VendorModule { }
 
