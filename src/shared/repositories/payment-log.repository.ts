@@ -60,4 +60,23 @@ export class PaymentLogRepository extends BaseRepository<PaymentLogDocument> {
             )
             .exec();
     }
+
+    async sumSubscriptionEarnings(): Promise<number> {
+        const result = await this.paymentLogModel.aggregate([
+            {
+                $match: {
+                    paymentType: PaymentType.SUBSCRIPTION,
+                    status: PaymentStatus.SUCCEEDED,
+                },
+            },
+            {
+                $group: {
+                    _id: null,
+                    total: { $sum: '$amount' },
+                },
+            },
+        ]);
+
+        return result.length > 0 ? (result[0].total || 0) : 0;
+    }
 }

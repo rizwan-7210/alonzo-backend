@@ -8,7 +8,7 @@ export default () => {
     const resolvedFromName =
         mailFromNameEnv && mailFromNameEnv !== '${APP_NAME}'
             ? mailFromNameEnv
-            : appName || 'Cms Plumber';
+            : appName || 'Alonzo';
 
     return ({
         app: {
