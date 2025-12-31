@@ -3,7 +3,7 @@ import { InjectModel } from '@nestjs/mongoose';
 import { Model, Types } from 'mongoose';
 import { BaseRepository } from './base.repository';
 import { File, FileDocument } from '../schemas/file.schema';
-import { FileType, FileCategory } from '../../common/constants/file.constants';
+import { FileType, FileCategory, FileSubType } from '../../common/constants/file.constants';
 import * as fs from 'fs/promises';
 import * as path from 'path';
 @Injectable()
@@ -54,6 +54,33 @@ export class FileRepository extends BaseRepository<FileDocument> {
                 fileableId: new Types.ObjectId(userId),
                 fileableType: 'User',
                 category: FileCategory.AVATAR,
+                isActive: true,
+            },
+            {
+                isActive: false,
+                updatedAt: new Date()
+            }
+        );
+    }
+
+    async findProfileImageByUserId(userId: string): Promise<FileDocument | null> {
+        return this.fileModel
+            .findOne({
+                fileableId: new Types.ObjectId(userId),
+                fileableType: 'User',
+                subType: FileSubType.PROFILE_IMAGE,
+                isActive: true,
+            })
+            .sort({ createdAt: -1 }) // Get the most recent one
+            .exec();
+    }
+
+    async deactivateProfileImageByUserId(userId: string): Promise<void> {
+        await this.fileModel.updateMany(
+            {
+                fileableId: new Types.ObjectId(userId),
+                fileableType: 'User',
+                subType: FileSubType.PROFILE_IMAGE,
                 isActive: true,
             },
             {

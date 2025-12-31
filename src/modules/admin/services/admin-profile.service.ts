@@ -11,7 +11,7 @@ import { UserRepository } from '../../../shared/repositories/user.repository';
 import { FileRepository } from '../../../shared/repositories/file.repository';
 import { UpdateAdminProfileDto } from '../dto/update-admin-profile.dto';
 import { ChangeAdminPasswordDto } from '../dto/change-admin-password.dto';
-import { FileCategory, FileType } from '../../../common/constants/file.constants';
+import { FileCategory, FileType, FileSubType } from '../../../common/constants/file.constants';
 import { UserRole } from '../../../common/constants/user.constants';
 import { Types } from 'mongoose';
 import * as fs from 'fs/promises';
@@ -39,7 +39,7 @@ export class AdminProfileService {
     async updateProfile(
         adminId: string,
         updateProfileDto: UpdateAdminProfileDto,
-        avatar?: Express.Multer.File
+        profileImage?: Express.Multer.File
     ) {
         try {
             const admin = await this.userRepository.findById(adminId);
@@ -55,27 +55,125 @@ export class AdminProfileService {
                 }
             }
 
-            let updatedAdmin = await this.userRepository.update(adminId, updateProfileDto);
-
-            if (avatar) {
-                await this.handleAvatarUpload(admin, avatar);
-
-                // Update admin with new avatar URL
-                const avatarUrl = `/uploads/${avatar.filename}`;
-                updatedAdmin = await this.userRepository.update(adminId, {
-                    ...updateProfileDto,
-                    avatar: avatarUrl
+            // Handle profile image upload if provided
+            let profileImageFileId: Types.ObjectId | undefined;
+            let createdProfileImageFile: any = null;
+            if (profileImage) {
+                console.log('📸 [Admin Profile Update] Starting profile image upload...');
+                const result = await this.handleProfileImageUpload(admin, profileImage);
+                profileImageFileId = result.fileId;
+                createdProfileImageFile = result.file; // Store the created file for later use
+                console.log('✅ [Admin Profile Update] Profile image file created:', {
+                    fileId: profileImageFileId.toString(),
+                    fileName: createdProfileImageFile?.name,
+                    subType: createdProfileImageFile?.subType,
                 });
-            } else {
-                // Update without avatar
-                updatedAdmin = await this.userRepository.update(adminId, updateProfileDto);
             }
+
+            // Update admin profile (include profileImage if it was uploaded)
+            const updateData: any = {
+                firstName: updateProfileDto.firstName,
+                lastName: updateProfileDto.lastName,
+                ...(updateProfileDto.email && { email: updateProfileDto.email }),
+                ...(updateProfileDto.phone && { phone: updateProfileDto.phone }),
+                ...(updateProfileDto.address && { address: updateProfileDto.address }),
+            };
+
+            // Include profileImage in update if it was uploaded
+            if (profileImageFileId) {
+                updateData.profileImage = profileImageFileId;
+                console.log('📝 [Admin Profile Update] Including profileImage in user update:', profileImageFileId.toString());
+            }
+
+            console.log('🔄 [Admin Profile Update] Updating user with data:', {
+                firstName: updateData.firstName,
+                lastName: updateData.lastName,
+                hasProfileImage: !!updateData.profileImage,
+            });
+
+            const updatedAdmin = await this.userRepository.update(adminId, updateData);
 
             if (!updatedAdmin) {
                 throw new InternalServerErrorException('Failed to update admin profile');
             }
 
-            return sanitizeUserUtils.sanitizeUser(updatedAdmin);
+            console.log('✅ [Admin Profile Update] User updated. profileImage field:', updatedAdmin.profileImage?.toString() || 'null');
+
+            // Fetch user with profileImage populated from files table
+            const userWithProfileImage = await this.userRepository.findByIdWithProfileImage(adminId);
+            console.log('🔍 [Admin Profile Update] User fetched. profileImage field:', userWithProfileImage?.profileImage?.toString() || 'null');
+
+            // Try multiple approaches to get the profileImage file
+            let profileImageFile: any = null;
+
+            // Approach 1: Use the file we just created (most reliable)
+            if (createdProfileImageFile) {
+                profileImageFile = createdProfileImageFile;
+                console.log('✅ [Admin Profile Update] Using created file object:', {
+                    fileId: profileImageFile._id?.toString(),
+                    path: profileImageFile.path,
+                    subType: profileImageFile.subType,
+                });
+            } else {
+                // Approach 2: Query file directly using fileableId and subType
+                console.log('🔍 [Admin Profile Update] Querying file by fileableId and subType...');
+                profileImageFile = await this.fileRepository.findProfileImageByUserId(adminId);
+                if (profileImageFile) {
+                    console.log('✅ [Admin Profile Update] File found by query:', {
+                        fileId: profileImageFile._id?.toString(),
+                        path: profileImageFile.path,
+                        subType: profileImageFile.subType,
+                    });
+                } else {
+                    console.log('⚠️ [Admin Profile Update] File NOT found by query');
+                }
+            }
+
+            // Approach 3: If still not found and user has profileImage field, try virtual relation
+            if (!profileImageFile && userWithProfileImage && userWithProfileImage.profileImage) {
+                console.log('🔍 [Admin Profile Update] Trying virtual relation population...');
+                try {
+                    await userWithProfileImage.populate({
+                        path: 'profileImageFile',
+                        select: 'name path mimeType size type subType createdAt',
+                    });
+                    const userAny = userWithProfileImage as any;
+                    profileImageFile = userAny.profileImageFile;
+                    if (profileImageFile) {
+                        console.log('✅ [Admin Profile Update] File found via virtual relation:', {
+                            fileId: profileImageFile._id?.toString(),
+                            path: profileImageFile.path,
+                        });
+                    } else {
+                        console.log('⚠️ [Admin Profile Update] File NOT found via virtual relation');
+                    }
+                } catch (error) {
+                    console.log('❌ [Admin Profile Update] Failed to populate via virtual relation:', error.message);
+                    this.logger.warn(`Failed to populate profileImageFile via virtual relation: ${error.message}`);
+                }
+            }
+
+            // Attach the profileImageFile to the user object for sanitization
+            // We need to ensure it's accessible when toObject() is called
+            if (userWithProfileImage && profileImageFile) {
+                const userAny = userWithProfileImage as any;
+                userAny.profileImageFile = profileImageFile;
+
+                // Mark the document as modified to ensure virtuals are included
+                userWithProfileImage.markModified('profileImageFile');
+
+                console.log('✅ [Admin Profile Update] File attached to user object');
+                console.log('🔍 [Admin Profile Update] Verifying attachment - profileImageFile exists:', !!userAny.profileImageFile);
+            } else {
+                console.log('⚠️ [Admin Profile Update] File NOT attached. userWithProfileImage:', !!userWithProfileImage, 'profileImageFile:', !!profileImageFile);
+            }
+
+            // Pass the user object with profileImageFile attached
+            const userToSanitize = userWithProfileImage || updatedAdmin;
+            const sanitizedUser = sanitizeUserUtils.sanitizeUser(userToSanitize, profileImageFile);
+            console.log('📤 [Admin Profile Update] Final sanitized user. profileImage:', sanitizedUser?.profileImage ? 'EXISTS' : 'NULL');
+
+            return sanitizedUser;
         } catch (error) {
             this.logger.error(`Failed to update profile for admin ${adminId}: ${error.message}`);
             throw error;
@@ -83,16 +181,16 @@ export class AdminProfileService {
     }
 
     async changePassword(adminId: string, changePasswordDto: ChangeAdminPasswordDto) {
-        const { oldPassword, newPassword, confirmNewPassword } = changePasswordDto;
+        const { currentPassword, password, confirmPassword } = changePasswordDto;
 
         // Check if new passwords match
-        if (newPassword !== confirmNewPassword) {
-            throw new BadRequestException('New passwords do not match');
+        if (password !== confirmPassword) {
+            throw new BadRequestException('Password and confirm password do not match');
         }
 
-        // Check if new password is same as old password
-        if (oldPassword === newPassword) {
-            throw new BadRequestException('New password must be different from old password');
+        // Check if new password is same as current password
+        if (currentPassword === password) {
+            throw new BadRequestException('New password must be different from current password');
         }
 
         // Get admin with password
@@ -101,14 +199,14 @@ export class AdminProfileService {
             throw new NotFoundException('Admin not found');
         }
 
-        // Verify old password
-        const isOldPasswordValid = await bcrypt.compare(oldPassword, admin.password);
-        if (!isOldPasswordValid) {
-            throw new BadRequestException('Old password is incorrect');
+        // Verify current password
+        const isCurrentPasswordValid = await bcrypt.compare(currentPassword, admin.password);
+        if (!isCurrentPasswordValid) {
+            throw new BadRequestException('Current password is incorrect');
         }
 
         // Hash new password
-        const hashedPassword = await bcrypt.hash(newPassword, 12);
+        const hashedPassword = await bcrypt.hash(password, 12);
 
         const updatedAdmin = await this.userRepository.update(adminId, { password: hashedPassword });
 
@@ -126,108 +224,101 @@ export class AdminProfileService {
             throw new NotFoundException('Admin not found');
         }
 
-        await this.handleAvatarUpload(admin, file);
+        await this.handleProfileImageUpload(admin, file);
 
-        // Update admin with new avatar URL
-        const avatarUrl = `/uploads/${file.filename}`;
-        const updatedAdmin = await this.userRepository.update(adminId, { avatar: avatarUrl });
-
-        if (!updatedAdmin) {
-            throw new InternalServerErrorException('Failed to update avatar');
+        // Get updated user with profile image
+        const updatedAdmin = await this.userRepository.findByIdWithProfileImage(adminId);
+        if (updatedAdmin) {
+            await updatedAdmin.populate('profileImageFile');
         }
 
+        const sanitizedUser = sanitizeUserUtils.sanitizeUser(updatedAdmin || admin);
+
         return {
-            message: 'Avatar uploaded successfully',
-            avatar: avatarUrl
+            message: 'Profile image uploaded successfully',
+            profileImage: sanitizedUser?.profileImage || null
         };
     }
 
-    private async handleAvatarUpload(admin: any, newAvatar: Express.Multer.File): Promise<void> {
+    private async handleProfileImageUpload(admin: any, newProfileImage: Express.Multer.File): Promise<{ fileId: Types.ObjectId; file: any }> {
         try {
-            // 1. Validate avatar file
-            await this.validateAvatarFile(newAvatar);
+            // 1. Validate profile image file
+            await this.validateProfileImageFile(newProfileImage);
 
-            // 2. Delete old avatar from database
-            if (admin.avatarFile) {
-                await this.deleteOldAvatar(admin);
+            // 2. Deactivate old profile image from database
+            await this.fileRepository.deactivateProfileImageByUserId(admin._id.toString());
+
+            // 3. Delete old profile image file from disk if exists
+            const oldProfileImage = await this.fileRepository.findProfileImageByUserId(admin._id.toString());
+            if (oldProfileImage) {
+                await this.deleteOldProfileImageFileFromDisk(oldProfileImage);
             }
 
-            // 3. Delete old avatar file from file system
-            await this.deleteOldAvatarFileFromDisk(admin);
+            // 4. Create new profile image file record
+            const newProfileImageFile = await this.fileRepository.create({
+                name: newProfileImage.filename,
+                originalName: newProfileImage.originalname,
+                path: newProfileImage.filename,
+                mimeType: newProfileImage.mimetype,
+                size: newProfileImage.size,
+                type: FileType.IMAGE,
+                category: FileCategory.PROFILE,
+                subType: FileSubType.PROFILE_IMAGE,
+                fileableId: new Types.ObjectId(admin._id),
+                fileableType: 'User',
+                uploadedBy: new Types.ObjectId(admin._id),
+                isActive: true,
+            });
 
-            // 4. Create new avatar file record
-            await this.createNewAvatarFile(admin, newAvatar);
+            // 5. Return both the file ID and the file object
+            return {
+                fileId: newProfileImageFile._id as Types.ObjectId,
+                file: newProfileImageFile,
+            };
 
         } catch (error) {
-            this.logger.error(`Failed to handle avatar upload for admin ${admin._id}:`, error);
-            throw new BadRequestException('Failed to update avatar');
+            this.logger.error(`Failed to handle profile image upload for admin ${admin._id}:`, error);
+            throw new BadRequestException('Failed to update profile image');
         }
     }
 
-    private async deleteOldAvatar(admin: any): Promise<void> {
+    private async deleteOldProfileImageFileFromDisk(oldFile: any): Promise<void> {
         try {
-            // Deactivate old avatar in database (soft delete)
-            await this.fileRepository.deactivateUserAvatar(admin._id.toString());
-        } catch (error) {
-            this.logger.warn(`Failed to delete old avatar from database for admin ${admin._id}:`, error);
-            // Continue even if this fails
-        }
-    }
-
-    private async deleteOldAvatarFileFromDisk(admin: any): Promise<void> {
-        try {
-            if (!admin.avatar) {
+            if (!oldFile.path) {
                 return;
             }
 
-            // Extract filename from avatar URL
-            let oldFilename: string;
-            if (admin.avatar.startsWith('/uploads/')) {
-                oldFilename = admin.avatar.replace('/uploads/', '');
+            // Extract filename from path
+            let filename: string;
+            if (oldFile.path.startsWith('/uploads/')) {
+                filename = oldFile.path.replace('/uploads/', '');
             } else {
-                oldFilename = admin.avatar;
+                filename = oldFile.path;
             }
 
             // Construct full path to the file
             const uploadsDir = path.join(process.cwd(), 'uploads');
-            const oldFilePath = path.join(uploadsDir, oldFilename);
+            const oldFilePath = path.join(uploadsDir, filename);
 
             // Check if file exists and delete it
             try {
                 await fs.access(oldFilePath);
                 await fs.unlink(oldFilePath);
-                this.logger.log(`Deleted old avatar file: ${oldFilePath}`);
+                this.logger.log(`Deleted old profile image file: ${oldFilePath}`);
             } catch (error) {
                 // File doesn't exist or can't be accessed - that's ok
-                this.logger.debug(`Old avatar file not found or already deleted: ${oldFilePath}`);
+                this.logger.debug(`Old profile image file not found or already deleted: ${oldFilePath}`);
             }
         } catch (error) {
-            this.logger.warn(`Failed to delete old avatar file from disk for admin ${admin._id}:`, error);
+            this.logger.warn(`Failed to delete old profile image file from disk:`, error);
             // Continue even if this fails
         }
     }
 
-    private async createNewAvatarFile(admin: any, newAvatar: Express.Multer.File): Promise<void> {
-        // Create new avatar file record
-        await this.fileRepository.create({
-            name: newAvatar.filename,
-            originalName: newAvatar.originalname,
-            path: newAvatar.filename,
-            mimeType: newAvatar.mimetype,
-            size: newAvatar.size,
-            type: FileType.IMAGE,
-            category: FileCategory.AVATAR,
-            fileableId: new Types.ObjectId(admin._id),
-            fileableType: 'User',
-            uploadedBy: new Types.ObjectId(admin._id),
-            isActive: true,
-        });
-    }
-
-    private async validateAvatarFile(avatar: Express.Multer.File): Promise<void> {
+    private async validateProfileImageFile(profileImage: Express.Multer.File): Promise<void> {
         // Validate file type
         const allowedMimeTypes = ['image/jpeg', 'image/jpg', 'image/png', 'image/webp', 'image/gif'];
-        if (!allowedMimeTypes.includes(avatar.mimetype)) {
+        if (!allowedMimeTypes.includes(profileImage.mimetype)) {
             throw new BadRequestException(
                 `Invalid file type. Allowed types: ${allowedMimeTypes.join(', ')}`
             );
@@ -235,7 +326,7 @@ export class AdminProfileService {
 
         // Validate file size (max 5MB)
         const maxSize = 5 * 1024 * 1024; // 5MB
-        if (avatar.size > maxSize) {
+        if (profileImage.size > maxSize) {
             throw new BadRequestException(
                 `File too large. Maximum size is ${maxSize / (1024 * 1024)}MB`
             );

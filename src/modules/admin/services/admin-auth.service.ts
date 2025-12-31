@@ -40,8 +40,14 @@ export class AdminAuthService {
         const tokens = await this.generateTokens(user._id.toString(), user.email, user.role);
         await this.userRepository.updateRefreshToken(user._id.toString(), tokens.refreshToken);
 
+        // Get user with profile image populated from files table
+        const userWithProfileImage = await this.userRepository.findByEmailWithProfileImage(email);
+        if (userWithProfileImage) {
+            await userWithProfileImage.populate('profileImageFile');
+        }
+
         // Build response object
-        const sanitizedUser = sanitizeUserUtils.sanitizeUser(user);
+        const sanitizedUser = sanitizeUserUtils.sanitizeUser(userWithProfileImage || user);
         return {
             user: sanitizedUser,
             accessToken: tokens.accessToken,

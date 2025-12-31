@@ -1,4 +1,4 @@
-import { IsEmail, IsOptional, IsString } from 'class-validator';
+import { IsEmail, IsNotEmpty, IsOptional, IsString } from 'class-validator';
 import { ApiProperty } from '@nestjs/swagger';
 
 export class UpdateAdminProfileDto {
@@ -7,15 +7,15 @@ export class UpdateAdminProfileDto {
     @IsOptional()
     email?: string;
 
-    @ApiProperty({ example: 'John', required: false })
+    @ApiProperty({ example: 'John', required: true })
     @IsString()
-    @IsOptional()
-    firstName?: string;
+    @IsNotEmpty()
+    firstName: string;
 
-    @ApiProperty({ example: 'Doe', required: false })
+    @ApiProperty({ example: 'Doe', required: true })
     @IsString()
-    @IsOptional()
-    lastName?: string;
+    @IsNotEmpty()
+    lastName: string;
 
     @ApiProperty({ example: '+1234567890', required: false })
     @IsString()
@@ -27,7 +27,7 @@ export class UpdateAdminProfileDto {
     @IsOptional()
     address?: string;
 
-    @ApiProperty({ type: 'string', format: 'binary', required: false, description: 'Avatar image file' })
+    @ApiProperty({ type: 'string', format: 'binary', required: false, description: 'Profile image file' })
     @IsOptional()
-    avatar?: any;
+    profileImage?: any;
 }

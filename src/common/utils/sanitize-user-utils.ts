@@ -1,8 +1,24 @@
 export class sanitizeUserUtils {
-    static sanitizeUser(user: any) {
+    static sanitizeUser(user: any, profileImageFile?: any) {
         if (!user) return null;
 
-        const userObj = user.toObject ? user.toObject() : user;
+        // Convert to plain object, preserving manually attached properties
+        let userObj: any;
+        if (user.toObject) {
+            userObj = user.toObject({ virtuals: true });
+            // Manually copy profileImageFile if it was passed or attached
+            if (profileImageFile) {
+                userObj.profileImageFile = profileImageFile;
+            } else if ((user as any).profileImageFile) {
+                userObj.profileImageFile = (user as any).profileImageFile;
+            }
+        } else {
+            userObj = user;
+            // If profileImageFile was passed, add it to the object
+            if (profileImageFile) {
+                userObj.profileImageFile = profileImageFile;
+            }
+        }
 
         // Transform _id to id
         if (userObj._id && typeof userObj._id === 'object') {
@@ -10,26 +26,59 @@ export class sanitizeUserUtils {
             delete userObj._id;
         }
 
-        // Handle profileImageFile virtual field
+        // Handle profileImageFile virtual field - return as object from files table
+        console.log('🔍 [Sanitize User] Checking profileImageFile. Has profileImageFile:', !!userObj.profileImageFile);
         if (userObj.profileImageFile) {
-            // If profileImageFile is populated, include it in the response
-            // It will have its own url virtual from the File schema
-            if (userObj.profileImageFile.url) {
-                userObj.profileImage = userObj.profileImageFile.url;
-            } else if (userObj.profileImageFile.path) {
-                userObj.profileImage = `/uploads/${userObj.profileImageFile.path}`;
+            // If profileImageFile is populated, return it as an object
+            const profileImageObj = userObj.profileImageFile.toObject ? userObj.profileImageFile.toObject() : userObj.profileImageFile;
+            console.log('✅ [Sanitize User] profileImageFile found:', {
+                id: profileImageObj._id ? profileImageObj._id.toString() : profileImageObj.id,
+                path: profileImageObj.path,
+                subType: profileImageObj.subType,
+            });
+            // Build complete URL for the image with full domain
+            let imageUrl: string | null = null;
+            if (profileImageObj.path) {
+                // Get base URL from environment or use default
+                const baseUrl = process.env.APP_URL || 'http://localhost:3000';
+
+                // Remove trailing slash from baseUrl if present
+                const cleanBaseUrl = baseUrl.replace(/\/$/, '');
+
+                // Check if path already includes /uploads/
+                if (profileImageObj.path.startsWith('/uploads/')) {
+                    imageUrl = `${cleanBaseUrl}${profileImageObj.path}`;
+                } else if (profileImageObj.path.startsWith('http')) {
+                    // Already a full URL
+                    imageUrl = profileImageObj.path;
+                } else {
+                    // Build full URL with domain
+                    imageUrl = `${cleanBaseUrl}/uploads/${profileImageObj.path}`;
+                }
             }
-        } else if (userObj.profileImage) {
-            // If profileImage is an ObjectId, it needs to be populated
-            // For now, set to null if not populated
-            userObj.profileImage = null;
+
+            // Use constructed full URL (prefer our constructed one over virtual which might be relative)
+            const finalUrl = imageUrl || profileImageObj.url;
+
+            userObj.profileImage = {
+                id: profileImageObj._id ? profileImageObj._id.toString() : profileImageObj.id,
+                path: profileImageObj.path,
+                path_link: finalUrl,
+                type: profileImageObj.type,
+                subType: profileImageObj.subType || 'profileImage',
+                createdAt: profileImageObj.createdAt ? new Date(profileImageObj.createdAt).toISOString() : null,
+            };
+            // Remove profileImageFile from response (it's only used internally)
+            delete userObj.profileImageFile;
         } else {
+            // If no profileImageFile found, set to null
+            console.log('⚠️ [Sanitize User] profileImageFile NOT found, setting to null');
             userObj.profileImage = null;
         }
 
         // Backward compatibility: also set avatar field if profileImage exists
-        if (userObj.profileImage) {
-            userObj.avatar = userObj.profileImage;
+        if (userObj.profileImage && userObj.profileImage.path) {
+            userObj.avatar = `/uploads/${userObj.profileImage.path}`;
         } else {
             userObj.avatar = null;
         }
@@ -53,8 +102,8 @@ export class sanitizeUserUtils {
             userObj.categoryId = userObj.category.id;
         } else if (userObj.categoryId) {
             // If category is not populated, ensure categoryId is a string and set category to null
-            userObj.categoryId = typeof userObj.categoryId === 'object' 
-                ? userObj.categoryId.toString() 
+            userObj.categoryId = typeof userObj.categoryId === 'object'
+                ? userObj.categoryId.toString()
                 : userObj.categoryId;
             userObj.category = null;
         } else {

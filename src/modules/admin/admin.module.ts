@@ -14,6 +14,7 @@ import { AdminContactController } from './controllers/admin-contact.controller';
 import { AdminFileController } from './controllers/admin-file.controller';
 import { AdminNotificationController } from './controllers/admin-notification.controller';
 import { AdminProfileController } from './controllers/admin-profile.controller';
+import { AdminChangePasswordController } from './controllers/admin-change-password.controller';
 import { DashboardController } from './controllers/dashboard.controller';
 import { SharedModule } from 'src/shared/shared.module';
 import { PlanController } from './controllers/plan.controller';
@@ -50,6 +51,7 @@ import { CategoryModule } from '../category/category.module';
         AdminFileController,
         AdminNotificationController,
         AdminProfileController,
+        AdminChangePasswordController,
         DashboardController,
         PlanController,
         SubscriptionLogController,

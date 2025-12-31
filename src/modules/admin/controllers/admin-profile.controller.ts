@@ -15,7 +15,6 @@ import { FileInterceptor } from '@nestjs/platform-express';
 import { ApiTags, ApiOperation, ApiResponse, ApiBearerAuth, ApiConsumes, ApiBody } from '@nestjs/swagger';
 import { AdminProfileService } from '../services/admin-profile.service';
 import { UpdateAdminProfileDto } from '../dto/update-admin-profile.dto';
-import { ChangeAdminPasswordDto } from '../dto/change-admin-password.dto';
 import { CurrentUser } from '../../../common/decorators/current-user.decorator';
 import { Roles } from '../../../common/decorators/roles.decorator';
 import { UserRole } from '../../../common/constants/user.constants';
@@ -41,7 +40,7 @@ export class AdminProfileController {
     }
 
     @Put()
-    @UseInterceptors(FileInterceptor('avatar', multerConfig))
+    @UseInterceptors(FileInterceptor('profileImage', multerConfig))
     @ApiConsumes('multipart/form-data')
     @ApiBody({ type: UpdateAdminProfileDto })
     @ApiOperation({ summary: 'Update admin profile' })
@@ -57,20 +56,13 @@ export class AdminProfileController {
                 ],
             }),
         )
-        avatar?: Express.Multer.File,
+        profileImage?: Express.Multer.File,
     ) {
-        return this.adminProfileService.updateProfile(user.id, updateProfileDto, avatar);
-    }
-
-    @Put('change-password')
-    @ApiOperation({ summary: 'Change admin password' })
-    @ApiBody({ type: ChangeAdminPasswordDto })
-    @ApiResponse({ status: 200, description: 'Password changed successfully' })
-    async changePassword(
-        @CurrentUser() user: any,
-        @Body() changePasswordDto: ChangeAdminPasswordDto
-    ) {
-        return this.adminProfileService.changePassword(user.id, changePasswordDto);
+        const updatedUser = await this.adminProfileService.updateProfile(user.id, updateProfileDto, profileImage);
+        return {
+            message: 'Admin profile updated successfully',
+            data: updatedUser,
+        };
     }
 
     @Post('avatar')
