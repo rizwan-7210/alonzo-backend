@@ -22,9 +22,11 @@ import { PlanService } from './services/plan.service';
 import { SubscriptionLogController } from './controllers/subscription-log.controller';
 import { SubscriptionLogService } from './services/subscription-log.service';
 import { AdminNotificationService } from './services/admin-notification.service';
+import { AdminPushNotificationService } from './services/admin-push-notification.service';
 import { StripeWebhookController } from './controllers/stripe-webhook.controller';
 import { CategoryService } from './services/category.service';
 import { AdminCategoryController } from './controllers/admin-category.controller';
+import { AdminPushNotificationController } from './controllers/admin-push-notification.controller';
 import { CommonModule } from 'src/common/common.module';
 import { NotificationModule } from '../notification/notification.module';
 import { UserModule } from '../user/user.module';
@@ -41,6 +43,7 @@ import { CategoryModule } from '../category/category.module';
         PlanService,
         SubscriptionLogService,
         AdminNotificationService,
+        AdminPushNotificationService,
         CategoryService
     ],
     controllers: [
@@ -56,7 +59,8 @@ import { CategoryModule } from '../category/category.module';
         PlanController,
         SubscriptionLogController,
         StripeWebhookController,
-        AdminCategoryController
+        AdminCategoryController,
+        AdminPushNotificationController
     ],
 })
 export class AdminModule { }

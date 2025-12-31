@@ -24,6 +24,8 @@ import { Category, CategorySchema } from './schemas/category.schema';
 import { CategoryRepository } from './repositories/category.repository';
 import { Product, ProductSchema } from './schemas/product.schema';
 import { ProductRepository } from './repositories/product.repository';
+import { PushNotification, PushNotificationSchema } from './schemas/push-notification.schema';
+import { PushNotificationRepository } from './repositories/push-notification.repository';
 import { FormatterService } from './services/formatter.service';
 
 @Module({
@@ -41,9 +43,10 @@ import { FormatterService } from './services/formatter.service';
             { name: Invoice.name, schema: InvoiceSchema },
             { name: Category.name, schema: CategorySchema },
             { name: Product.name, schema: ProductSchema },
+            { name: PushNotification.name, schema: PushNotificationSchema },
         ]),
     ],
-    providers: [UserRepository, FileRepository, NotificationRepository, ContactRepository, PasswordResetRepository, PlanRepository, UserSubscriptionRepository, PaymentLogRepository, ReviewRepository, InvoiceRepository, CategoryRepository, ProductRepository, FormatterService],
-    exports: [MongooseModule, UserRepository, FileRepository, NotificationRepository, ContactRepository, PasswordResetRepository, PlanRepository, UserSubscriptionRepository, PaymentLogRepository, ReviewRepository, InvoiceRepository, CategoryRepository, ProductRepository, FormatterService],
+    providers: [UserRepository, FileRepository, NotificationRepository, ContactRepository, PasswordResetRepository, PlanRepository, UserSubscriptionRepository, PaymentLogRepository, ReviewRepository, InvoiceRepository, CategoryRepository, ProductRepository, PushNotificationRepository, FormatterService],
+    exports: [MongooseModule, UserRepository, FileRepository, NotificationRepository, ContactRepository, PasswordResetRepository, PlanRepository, UserSubscriptionRepository, PaymentLogRepository, ReviewRepository, InvoiceRepository, CategoryRepository, ProductRepository, PushNotificationRepository, FormatterService],
 })
 export class SharedModule { }

@@ -21,6 +21,7 @@
     "migration:update-users-schema": "ts-node -r tsconfig-paths/register src/migrations/update-users-schema.migration.ts",
     "migration:create-categories": "ts-node -r tsconfig-paths/register src/migrations/create-categories.migration.ts",
     "migration:create-products": "ts-node -r tsconfig-paths/register src/migrations/create-products.migration.ts",
+    "migration:create-push-notifications": "ts-node -r tsconfig-paths/register src/migrations/create-push-notifications.migration.ts",
     "migration:migrate-avatars-to-files": "ts-node -r tsconfig-paths/register src/migrations/migrate-avatars-to-files.migration.ts",
     "seed:categories": "ts-node -r tsconfig-paths/register src/seeders/categories.seeder.ts",
     "seed:admin": "ts-node -r tsconfig-paths/register src/seeders/admin.seeder.ts"
