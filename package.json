@@ -23,6 +23,8 @@
     "migration:create-products": "ts-node -r tsconfig-paths/register src/migrations/create-products.migration.ts",
     "migration:create-push-notifications": "ts-node -r tsconfig-paths/register src/migrations/create-push-notifications.migration.ts",
     "migration:migrate-avatars-to-files": "ts-node -r tsconfig-paths/register src/migrations/migrate-avatars-to-files.migration.ts",
+    "migration:update-plans-schema": "ts-node -r tsconfig-paths/register src/migrations/update-plans-schema.migration.ts",
+    "migration:update-user-subscriptions-schema": "ts-node -r tsconfig-paths/register src/migrations/update-user-subscriptions-schema.migration.ts",
     "seed:categories": "ts-node -r tsconfig-paths/register src/seeders/categories.seeder.ts",
     "seed:admin": "ts-node -r tsconfig-paths/register src/seeders/admin.seeder.ts"
   },

@@ -7,3 +7,8 @@ export enum SubscriptionStatus {
     TRIALING = 'trialing',
     UNPAID = 'unpaid',
 }
+
+export enum UserSubscriptionStatus {
+    PAID = 'paid',
+    UNPAID = 'unpaid',
+}

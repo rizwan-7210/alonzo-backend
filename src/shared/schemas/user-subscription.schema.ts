@@ -1,8 +1,7 @@
 import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose';
-import { Document, Schema as MongooseSchema } from 'mongoose';
-import { SubscriptionStatus } from '../../common/constants/subscription.constants';
-import { User } from './user.schema';
-import { Plan } from './plan.schema';
+import { Document, Schema as MongooseSchema, Types } from 'mongoose';
+import { UserSubscriptionStatus } from '../../common/constants/subscription.constants';
+import { PlanDuration } from '../../common/constants/plan.constants';
 
 export type UserSubscriptionDocument = UserSubscription & Document;
 
@@ -19,6 +18,16 @@ export type UserSubscriptionDocument = UserSubscription & Document;
                 delete transformedRet._id;
             }
 
+            // Convert planId ObjectId to string
+            if (transformedRet.planId && typeof transformedRet.planId === 'object') {
+                transformedRet.planId = transformedRet.planId.toString();
+            }
+
+            // Convert userId ObjectId to string
+            if (transformedRet.userId && typeof transformedRet.userId === 'object') {
+                transformedRet.userId = transformedRet.userId.toString();
+            }
+
             // Convert dates
             if (transformedRet.createdAt) {
                 transformedRet.createdAt = new Date(transformedRet.createdAt).toISOString();
@@ -26,17 +35,8 @@ export type UserSubscriptionDocument = UserSubscription & Document;
             if (transformedRet.updatedAt) {
                 transformedRet.updatedAt = new Date(transformedRet.updatedAt).toISOString();
             }
-            if (transformedRet.currentPeriodStart) {
-                transformedRet.currentPeriodStart = new Date(transformedRet.currentPeriodStart).toISOString();
-            }
-            if (transformedRet.currentPeriodEnd) {
-                transformedRet.currentPeriodEnd = new Date(transformedRet.currentPeriodEnd).toISOString();
-            }
-            if (transformedRet.canceledAt) {
-                transformedRet.canceledAt = new Date(transformedRet.canceledAt).toISOString();
-            }
-            if (transformedRet.endedAt) {
-                transformedRet.endedAt = new Date(transformedRet.endedAt).toISOString();
+            if (transformedRet.expiryDate) {
+                transformedRet.expiryDate = new Date(transformedRet.expiryDate).toISOString();
             }
 
             delete transformedRet.__v;
@@ -46,45 +46,38 @@ export type UserSubscriptionDocument = UserSubscription & Document;
     },
 })
 export class UserSubscription {
-    @Prop({ type: MongooseSchema.Types.ObjectId, ref: 'User', required: true })
-    userId: User;
+    @Prop({ type: Types.ObjectId, ref: 'Plan', required: true })
+    planId: Types.ObjectId;
 
-    @Prop({ type: MongooseSchema.Types.ObjectId, ref: 'Plan', required: true })
-    planId: Plan;
+    @Prop({ type: Types.ObjectId, ref: 'User', required: true })
+    userId: Types.ObjectId;
 
-    @Prop({ type: String, required: true })
-    stripeSubscriptionId: string;
-
-    @Prop({ type: String, required: true })
-    stripeCustomerId: string;
+    @Prop({ type: Number, required: true })
+    amountPaid: number;
 
     @Prop({
         type: String,
-        enum: Object.values(SubscriptionStatus),
-        default: SubscriptionStatus.INCOMPLETE,
+        enum: Object.values(UserSubscriptionStatus),
+        default: UserSubscriptionStatus.UNPAID,
     })
-    status: SubscriptionStatus;
+    status: UserSubscriptionStatus;
+
+    @Prop({
+        type: String,
+        enum: Object.values(PlanDuration),
+        required: true,
+    })
+    duration: PlanDuration;
 
     @Prop({ type: Date, required: true })
-    currentPeriodStart: Date;
-
-    @Prop({ type: Date, required: true })
-    currentPeriodEnd: Date;
-
-    @Prop({ type: Boolean, default: false })
-    cancelAtPeriodEnd: boolean;
-
-    @Prop({ type: Date })
-    canceledAt?: Date;
-
-    @Prop({ type: Date })
-    endedAt?: Date;
+    expiryDate: Date;
 }
 
 export const UserSubscriptionSchema = SchemaFactory.createForClass(UserSubscription);
 
 // Indexes
 UserSubscriptionSchema.index({ userId: 1 });
-UserSubscriptionSchema.index({ stripeSubscriptionId: 1 }, { unique: true });
-UserSubscriptionSchema.index({ stripeCustomerId: 1 });
+UserSubscriptionSchema.index({ planId: 1 });
 UserSubscriptionSchema.index({ status: 1 });
+UserSubscriptionSchema.index({ expiryDate: 1 });
+UserSubscriptionSchema.index({ createdAt: -1 });

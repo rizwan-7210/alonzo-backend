@@ -16,6 +16,8 @@ import { NotificationModule } from './modules/notification/notification.module';
 import { ContactModule } from './modules/contact/contact.module';
 import { VendorModule } from './modules/vendor/vendor.module';
 import { ProductModule } from './modules/product/product.module';
+import { PlansModule } from './modules/plans/plans.module';
+import { UserSubscriptionsModule } from './modules/user-subscriptions/user-subscriptions.module';
 import { SharedModule } from './shared/shared.module';
 
 @Module({
@@ -47,6 +49,8 @@ import { SharedModule } from './shared/shared.module';
     ContactModule,
     VendorModule,
     ProductModule,
+    PlansModule,
+    UserSubscriptionsModule,
   ],
 })
 export class AppModule { }

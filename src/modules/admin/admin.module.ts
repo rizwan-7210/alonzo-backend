@@ -17,8 +17,6 @@ import { AdminProfileController } from './controllers/admin-profile.controller';
 import { AdminChangePasswordController } from './controllers/admin-change-password.controller';
 import { DashboardController } from './controllers/dashboard.controller';
 import { SharedModule } from 'src/shared/shared.module';
-import { PlanController } from './controllers/plan.controller';
-import { PlanService } from './services/plan.service';
 import { SubscriptionLogController } from './controllers/subscription-log.controller';
 import { SubscriptionLogService } from './services/subscription-log.service';
 import { AdminNotificationService } from './services/admin-notification.service';
@@ -40,7 +38,6 @@ import { CategoryModule } from '../category/category.module';
         UserManagementService,
         AdminProfileService,
         DashboardService,
-        PlanService,
         SubscriptionLogService,
         AdminNotificationService,
         AdminPushNotificationService,
@@ -56,7 +53,6 @@ import { CategoryModule } from '../category/category.module';
         AdminProfileController,
         AdminChangePasswordController,
         DashboardController,
-        PlanController,
         SubscriptionLogController,
         StripeWebhookController,
         AdminCategoryController,

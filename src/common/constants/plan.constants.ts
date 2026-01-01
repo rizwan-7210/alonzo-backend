@@ -7,3 +7,8 @@ export enum PlanInterval {
     MONTHLY = 'month',
     YEARLY = 'year',
 }
+
+export enum PlanDuration {
+    MONTHLY = 'monthly',
+    YEARLY = 'yearly',
+}

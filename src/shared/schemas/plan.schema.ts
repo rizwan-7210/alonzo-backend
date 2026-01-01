@@ -1,6 +1,6 @@
 import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose';
 import { Document } from 'mongoose';
-import { PlanStatus, PlanInterval } from '../../common/constants/plan.constants';
+import { PlanStatus, PlanDuration } from '../../common/constants/plan.constants';
 
 export type PlanDocument = Plan & Document;
 
@@ -36,13 +36,26 @@ export type PlanDocument = Plan & Document;
 })
 export class Plan {
     @Prop({ type: String, required: true, trim: true })
-    name: string;
+    title: string;
+
+    @Prop({ type: String, required: false })
+    stripe_price_id?: string;
+
+    @Prop({ type: String, required: false })
+    stripe_product_id?: string;
+
+    @Prop({
+        type: String,
+        enum: Object.values(PlanDuration),
+        required: true,
+    })
+    duration: PlanDuration;
 
     @Prop({ type: Number, required: true })
     amount: number;
 
-    @Prop({ type: String, default: 'usd' })
-    currency: string;
+    @Prop({ type: String })
+    description?: string;
 
     @Prop({
         type: String,
@@ -50,28 +63,6 @@ export class Plan {
         default: PlanStatus.ACTIVE,
     })
     status: PlanStatus;
-
-    @Prop({ type: Number, default: 0 })
-    videoSessions: number;
-
-    @Prop({ type: Number, default: 0 })
-    slots: number;
-
-    @Prop({ type: String })
-    stripeProductId?: string;
-
-    @Prop({ type: String })
-    stripePriceId?: string;
-
-    @Prop({
-        type: String,
-        enum: Object.values(PlanInterval),
-        default: PlanInterval.MONTHLY,
-    })
-    interval: PlanInterval;
-
-    @Prop({ type: String })
-    description?: string;
 
     @Prop({ type: Date })
     deletedAt?: Date;
@@ -82,3 +73,4 @@ export const PlanSchema = SchemaFactory.createForClass(Plan);
 // Indexes
 PlanSchema.index({ status: 1 });
 PlanSchema.index({ createdAt: -1 });
+PlanSchema.index({ title: 1 });

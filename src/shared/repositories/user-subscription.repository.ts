@@ -3,7 +3,7 @@ import { InjectModel } from '@nestjs/mongoose';
 import { Model, Types } from 'mongoose';
 import { BaseRepository } from './base.repository';
 import { UserSubscription, UserSubscriptionDocument } from '../schemas/user-subscription.schema';
-import { SubscriptionStatus } from '../../common/constants/subscription.constants';
+import { UserSubscriptionStatus } from '../../common/constants/subscription.constants';
 
 @Injectable()
 export class UserSubscriptionRepository extends BaseRepository<UserSubscriptionDocument> {
@@ -13,9 +13,9 @@ export class UserSubscriptionRepository extends BaseRepository<UserSubscriptionD
         super(subscriptionModel);
     }
 
-    async findByUserId(userId: string): Promise<UserSubscriptionDocument | null> {
+    async findByUserId(userId: string): Promise<UserSubscriptionDocument[]> {
         return this.subscriptionModel
-            .findOne({ userId: new Types.ObjectId(userId) })
+            .find({ userId: new Types.ObjectId(userId) })
             .sort({ createdAt: -1 })
             .populate('planId')
             .exec();
@@ -25,25 +25,33 @@ export class UserSubscriptionRepository extends BaseRepository<UserSubscriptionD
         return this.subscriptionModel
             .findOne({
                 userId: new Types.ObjectId(userId),
-                status: { $in: [SubscriptionStatus.ACTIVE, SubscriptionStatus.TRIALING] },
+                status: UserSubscriptionStatus.PAID,
+                expiryDate: { $gte: new Date() },
             })
             .sort({ createdAt: -1 })
             .populate('planId')
             .exec();
     }
 
-    async findByStripeSubscriptionId(stripeSubscriptionId: string): Promise<UserSubscriptionDocument | null> {
-        return this.subscriptionModel
-            .findOne({ stripeSubscriptionId })
-            .populate('planId')
-            .exec();
-    }
+    async findAllWithPagination(
+        page: number = 1,
+        limit: number = 10,
+        userId?: string,
+        status?: UserSubscriptionStatus,
+    ) {
+        const conditions: any = {};
 
-    async findByStripeCustomerId(stripeCustomerId: string): Promise<UserSubscriptionDocument[]> {
-        return this.subscriptionModel
-            .find({ stripeCustomerId })
-            .sort({ createdAt: -1 })
-            .populate('planId')
-            .exec();
+        if (userId) {
+            conditions.userId = new Types.ObjectId(userId);
+        }
+
+        if (status) {
+            conditions.status = status;
+        }
+
+        return this.paginate(page, limit, conditions, {
+            sort: { createdAt: -1 },
+            populate: [{ path: 'planId' }, { path: 'userId', select: 'firstName lastName email' }],
+        });
     }
 }

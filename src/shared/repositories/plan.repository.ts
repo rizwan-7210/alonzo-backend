@@ -15,20 +15,20 @@ export class PlanRepository extends BaseRepository<PlanDocument> {
 
     async findActivePlans(): Promise<PlanDocument[]> {
         return this.planModel
-            .find({ status: PlanStatus.ACTIVE })
+            .find({ status: PlanStatus.ACTIVE, deletedAt: null })
             .sort({ amount: 1 })
             .exec();
     }
 
     async findByStripeProductId(stripeProductId: string): Promise<PlanDocument | null> {
         return this.planModel
-            .findOne({ stripeProductId })
+            .findOne({ stripe_product_id: stripeProductId })
             .exec();
     }
 
     async findByStripePriceId(stripePriceId: string): Promise<PlanDocument | null> {
         return this.planModel
-            .findOne({ stripePriceId })
+            .findOne({ stripe_price_id: stripePriceId })
             .exec();
     }
 
@@ -47,5 +47,27 @@ export class PlanRepository extends BaseRepository<PlanDocument> {
 
     async findAllNonDeleted(): Promise<PlanDocument[]> {
         return this.planModel.find({ deletedAt: null }).exec();
+    }
+
+    async findAllWithPagination(
+        page: number = 1,
+        limit: number = 10,
+        search?: string,
+        status?: PlanStatus,
+    ) {
+        const conditions: any = { deletedAt: null };
+
+        if (search) {
+            conditions.$or = [
+                { title: { $regex: search, $options: 'i' } },
+                { description: { $regex: search, $options: 'i' } },
+            ];
+        }
+
+        if (status) {
+            conditions.status = status;
+        }
+
+        return this.paginate(page, limit, conditions, { sort: { createdAt: -1 } });
     }
 }
