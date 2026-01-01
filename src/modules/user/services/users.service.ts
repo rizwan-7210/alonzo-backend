@@ -310,9 +310,31 @@ export class UsersService {
                 `Vendor ${id} ${vendorActionDto.accountStatus === AccountStatus.APPROVED ? 'approved' : 'rejected'}`,
             );
 
+            // Format response similar to getUserDetails
+            const userObj = updatedUser.toObject ? updatedUser.toObject() : updatedUser;
+            const response: any = {
+                ...userObj,
+            };
+
+            // Format profileImage as object with path_link
+            if (userObj.profileImage) {
+                response.profileImage = this.formatFileObject(userObj.profileImage);
+            } else {
+                response.profileImage = null;
+            }
+
+            // Format categoryId as object with _id and title if it exists
+            if (userObj.categoryId) {
+                const categoryObj = userObj.categoryId.toObject ? userObj.categoryId.toObject() : userObj.categoryId;
+                response.categoryId = {
+                    _id: categoryObj._id?.toString() || categoryObj.id,
+                    title: categoryObj.title,
+                };
+            }
+
             return {
                 message: `Vendor ${vendorActionDto.accountStatus === AccountStatus.APPROVED ? 'approved' : 'rejected'} successfully`,
-                data: updatedUser,
+                data: response,
             };
         } catch (error) {
             this.logger.error(`Error updating vendor status ${id}:`, error);
@@ -345,9 +367,31 @@ export class UsersService {
             const newStatus = updatedUser.status;
             this.logger.log(`User ${id} status toggled to ${newStatus}`);
 
+            // Format response similar to getUserDetails
+            const userObj = updatedUser.toObject ? updatedUser.toObject() : updatedUser;
+            const response: any = {
+                ...userObj,
+            };
+
+            // Format profileImage as object with path_link
+            if (userObj.profileImage) {
+                response.profileImage = this.formatFileObject(userObj.profileImage);
+            } else {
+                response.profileImage = null;
+            }
+
+            // Format categoryId as object with _id and title if it exists
+            if (userObj.categoryId) {
+                const categoryObj = userObj.categoryId.toObject ? userObj.categoryId.toObject() : userObj.categoryId;
+                response.categoryId = {
+                    _id: categoryObj._id?.toString() || categoryObj.id,
+                    title: categoryObj.title,
+                };
+            }
+
             return {
                 message: `User ${newStatus === UserStatus.ACTIVE ? 'activated' : 'deactivated'} successfully`,
-                data: updatedUser,
+                data: response,
             };
         } catch (error) {
             this.logger.error(`Error toggling user status ${id}:`, error);

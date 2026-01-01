@@ -91,7 +91,16 @@ export class UsersRepository extends BaseRepository<UserDocument> {
             updateData.rejectionReason = null;
         }
 
-        return this.update(id, updateData);
+        // Update the account status
+        await this.update(id, updateData);
+
+        // Return the updated user with populated profileImage and categoryId
+        return this.findById(id, {
+            populate: [
+                { path: 'profileImage', select: 'id path name mimeType size type category subType createdAt' },
+                { path: 'categoryId', select: 'id title' },
+            ],
+        });
     }
 
     /**
@@ -106,7 +115,13 @@ export class UsersRepository extends BaseRepository<UserDocument> {
         const newStatus =
             user.status === UserStatus.ACTIVE ? UserStatus.INACTIVE : UserStatus.ACTIVE;
 
-        return this.update(id, { status: newStatus });
+        // Update the status
+        await this.update(id, { status: newStatus });
+
+        // Return the updated user with populated profileImage
+        return this.findById(id, {
+            populate: [{ path: 'profileImage', select: 'id path name mimeType size type category subType createdAt' }],
+        });
     }
 }
 
