@@ -75,6 +75,8 @@ export class AdminPlansController {
     @ApiQuery({ name: 'limit', required: false, type: Number, example: 10 })
     @ApiQuery({ name: 'search', required: false, type: String, description: 'Search by title or description' })
     @ApiQuery({ name: 'status', required: false, type: String, enum: ['active', 'inactive'], description: 'Filter by status' })
+    @ApiQuery({ name: 'fromDate', required: false, type: String, format: 'date', example: '2026-01-06', description: 'Filter by start date (ISO 8601 format)' })
+    @ApiQuery({ name: 'toDate', required: false, type: String, format: 'date', example: '2026-01-09', description: 'Filter by end date (ISO 8601 format)' })
     @ApiResponse({
         status: 200,
         description: 'Plans retrieved successfully',

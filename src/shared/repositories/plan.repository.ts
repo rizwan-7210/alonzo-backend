@@ -54,6 +54,8 @@ export class PlanRepository extends BaseRepository<PlanDocument> {
         limit: number = 10,
         search?: string,
         status?: PlanStatus,
+        fromDate?: string,
+        toDate?: string,
     ) {
         const conditions: any = { deletedAt: null };
 
@@ -66,6 +68,19 @@ export class PlanRepository extends BaseRepository<PlanDocument> {
 
         if (status) {
             conditions.status = status;
+        }
+
+        if (fromDate || toDate) {
+            conditions.createdAt = {};
+            if (fromDate) {
+                conditions.createdAt.$gte = new Date(fromDate);
+            }
+            if (toDate) {
+                // Set to end of day for toDate
+                const endDate = new Date(toDate);
+                endDate.setHours(23, 59, 59, 999);
+                conditions.createdAt.$lte = endDate;
+            }
         }
 
         return this.paginate(page, limit, conditions, { sort: { createdAt: -1 } });

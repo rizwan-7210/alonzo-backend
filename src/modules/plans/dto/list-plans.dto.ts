@@ -1,4 +1,4 @@
-import { IsOptional, IsInt, Min, Max, IsString, IsEnum } from 'class-validator';
+import { IsOptional, IsInt, Min, Max, IsString, IsEnum, IsDateString, ValidateIf } from 'class-validator';
 import { Type } from 'class-transformer';
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import { PlanStatus } from '../../../common/constants/plan.constants';
@@ -39,5 +39,17 @@ export class ListPlansDto {
     @IsOptional()
     @IsEnum(PlanStatus, { message: 'Status must be either active or inactive' })
     status?: PlanStatus;
+
+    @ApiPropertyOptional({ description: 'Filter by start date (ISO 8601 format, e.g., 2026-01-06)' })
+    @ValidateIf((o) => o.fromDate !== undefined && o.fromDate !== null && o.fromDate !== '')
+    @IsDateString({}, { message: 'fromDate must be a valid ISO 8601 date string' })
+    @IsOptional()
+    fromDate?: string;
+
+    @ApiPropertyOptional({ description: 'Filter by end date (ISO 8601 format, e.g., 2026-01-09)' })
+    @ValidateIf((o) => o.toDate !== undefined && o.toDate !== null && o.toDate !== '')
+    @IsDateString({}, { message: 'toDate must be a valid ISO 8601 date string' })
+    @IsOptional()
+    toDate?: string;
 }
 

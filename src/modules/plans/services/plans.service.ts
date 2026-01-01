@@ -80,8 +80,10 @@ export class PlansService {
             const limit = queryDto.limit || 10;
             const search = queryDto.search;
             const status = queryDto.status;
+            const fromDate = queryDto.fromDate;
+            const toDate = queryDto.toDate;
 
-            const result = await this.planRepository.findAllWithPagination(page, limit, search, status);
+            const result = await this.planRepository.findAllWithPagination(page, limit, search, status, fromDate, toDate);
 
             return {
                 message: 'Plans retrieved successfully',
