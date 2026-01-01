@@ -26,8 +26,10 @@ export class FileRepository extends BaseRepository<FileDocument> {
         fileableId: string,
         fileableType: string,
     ): Promise<FileDocument[]> {
+        // Convert fileableId to ObjectId if it's a string
+        const objectId = new Types.ObjectId(fileableId);
         return this.fileModel
-            .find({ fileableId, fileableType, isActive: true })
+            .find({ fileableId: objectId, fileableType, isActive: true })
             .sort({ createdAt: -1 })
             .exec();
     }

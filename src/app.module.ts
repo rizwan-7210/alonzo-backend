@@ -9,7 +9,6 @@ import configuration from './config/configuration';
 import { CommonModule } from './common/common.module';
 // import { SharedModule } from './modules/shared/shared.module';
 import { AuthModule } from './modules/auth/auth.module';
-import { UserModule } from './modules/user/user.module';
 import { FileModule } from './modules/file/file.module';
 import { AdminModule } from './modules/admin/admin.module';
 import { NotificationModule } from './modules/notification/notification.module';
@@ -18,6 +17,7 @@ import { VendorModule } from './modules/vendor/vendor.module';
 import { ProductModule } from './modules/product/product.module';
 import { PlansModule } from './modules/plans/plans.module';
 import { UserSubscriptionsModule } from './modules/user-subscriptions/user-subscriptions.module';
+import { UserModule } from './modules/user/user.module';
 import { SharedModule } from './shared/shared.module';
 
 @Module({
@@ -42,7 +42,6 @@ import { SharedModule } from './shared/shared.module';
     CommonModule, // Add CommonModule here
     SharedModule,
     AuthModule,
-    UserModule,
     FileModule,
     AdminModule,
     NotificationModule,
@@ -51,6 +50,7 @@ import { SharedModule } from './shared/shared.module';
     ProductModule,
     PlansModule,
     UserSubscriptionsModule,
+    UserModule,
   ],
 })
 export class AppModule { }

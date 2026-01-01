@@ -9,7 +9,6 @@ import { AdminProfileService } from './services/admin-profile.service';
 import { DashboardService } from './services/dashboard.service';
 import { AdminAuthController } from './controllers/admin-auth.controller';
 import { AdminPasswordResetController } from './controllers/admin-password-reset.controller';
-import { AdminUserController } from './controllers/admin-user.controller';
 import { AdminContactController } from './controllers/admin-contact.controller';
 import { AdminFileController } from './controllers/admin-file.controller';
 import { AdminNotificationController } from './controllers/admin-notification.controller';
@@ -27,11 +26,10 @@ import { AdminCategoryController } from './controllers/admin-category.controller
 import { AdminPushNotificationController } from './controllers/admin-push-notification.controller';
 import { CommonModule } from 'src/common/common.module';
 import { NotificationModule } from '../notification/notification.module';
-import { UserModule } from '../user/user.module';
 import { CategoryModule } from '../category/category.module';
 
 @Module({
-    imports: [SharedModule, CommonModule, ConfigModule, JwtModule, ContactModule, NotificationModule, UserModule, CategoryModule],
+    imports: [SharedModule, CommonModule, ConfigModule, JwtModule, ContactModule, NotificationModule, CategoryModule],
     providers: [
         AdminAuthService,
         AdminPasswordResetService,
@@ -46,7 +44,6 @@ import { CategoryModule } from '../category/category.module';
     controllers: [
         AdminAuthController,
         AdminPasswordResetController,
-        AdminUserController,
         AdminContactController,
         AdminFileController,
         AdminNotificationController,
