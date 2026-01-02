@@ -216,8 +216,41 @@ export class VendorAuthService {
             await updatedUser.populate('profileImageFile');
         }
 
+        // Fetch pharmacyLicense and registrationCertificate files for vendors
+        let pharmacyLicense: any = null;
+        let registrationCertificate: any = null;
+        
+        if (user.role === UserRole.VENDOR) {
+            const userId = user._id.toString();
+            const userFiles = await this.fileRepository.findByEntity(userId, 'User');
+            
+            // Find pharmacy license file
+            const licenseFile = userFiles.find(
+                (file) => {
+                    const fileObj = file.toObject ? file.toObject() : file;
+                    return fileObj.subType === FileSubType.PHARMACY_LICENSE && fileObj.isActive !== false;
+                }
+            );
+            
+            // Find registration certificate file
+            const certificateFile = userFiles.find(
+                (file) => {
+                    const fileObj = file.toObject ? file.toObject() : file;
+                    return fileObj.subType === FileSubType.REGISTRATION_CERTIFICATE && fileObj.isActive !== false;
+                }
+            );
+            
+            if (licenseFile) {
+                pharmacyLicense = licenseFile;
+            }
+            
+            if (certificateFile) {
+                registrationCertificate = certificateFile;
+            }
+        }
+
         return {
-            user: sanitizeUserUtils.sanitizeUser(updatedUser),
+            user: sanitizeUserUtils.sanitizeUser(updatedUser, undefined, pharmacyLicense, registrationCertificate),
             ...tokens,
         };
     }

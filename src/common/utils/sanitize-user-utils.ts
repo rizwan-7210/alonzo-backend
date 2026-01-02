@@ -1,5 +1,5 @@
 export class sanitizeUserUtils {
-    static sanitizeUser(user: any, profileImageFile?: any) {
+    static sanitizeUser(user: any, profileImageFile?: any, pharmacyLicense?: any, registrationCertificate?: any) {
         if (!user) return null;
 
         // Convert to plain object, preserving manually attached properties
@@ -81,6 +81,62 @@ export class sanitizeUserUtils {
             userObj.avatar = `/uploads/${userObj.profileImage.path}`;
         } else {
             userObj.avatar = null;
+        }
+
+        // Handle pharmacyLicense file - return as object with path_link
+        if (pharmacyLicense) {
+            const licenseObj = pharmacyLicense.toObject ? pharmacyLicense.toObject() : pharmacyLicense;
+            let licenseUrl: string | null = null;
+            if (licenseObj.path) {
+                const baseUrl = process.env.APP_URL || 'http://localhost:3000';
+                const cleanBaseUrl = baseUrl.replace(/\/$/, '');
+                if (licenseObj.path.startsWith('/uploads/')) {
+                    licenseUrl = `${cleanBaseUrl}${licenseObj.path}`;
+                } else if (licenseObj.path.startsWith('http')) {
+                    licenseUrl = licenseObj.path;
+                } else {
+                    licenseUrl = `${cleanBaseUrl}/uploads/${licenseObj.path}`;
+                }
+            }
+            const finalLicenseUrl = licenseUrl || licenseObj.url;
+            userObj.pharmacyLicense = {
+                id: licenseObj._id ? licenseObj._id.toString() : licenseObj.id,
+                path: licenseObj.path,
+                path_link: finalLicenseUrl,
+                type: licenseObj.type,
+                subType: licenseObj.subType || 'pharmacyLicense',
+                createdAt: licenseObj.createdAt ? new Date(licenseObj.createdAt).toISOString() : null,
+            };
+        } else {
+            userObj.pharmacyLicense = null;
+        }
+
+        // Handle registrationCertificate file - return as object with path_link
+        if (registrationCertificate) {
+            const certObj = registrationCertificate.toObject ? registrationCertificate.toObject() : registrationCertificate;
+            let certUrl: string | null = null;
+            if (certObj.path) {
+                const baseUrl = process.env.APP_URL || 'http://localhost:3000';
+                const cleanBaseUrl = baseUrl.replace(/\/$/, '');
+                if (certObj.path.startsWith('/uploads/')) {
+                    certUrl = `${cleanBaseUrl}${certObj.path}`;
+                } else if (certObj.path.startsWith('http')) {
+                    certUrl = certObj.path;
+                } else {
+                    certUrl = `${cleanBaseUrl}/uploads/${certObj.path}`;
+                }
+            }
+            const finalCertUrl = certUrl || certObj.url;
+            userObj.registrationCertificate = {
+                id: certObj._id ? certObj._id.toString() : certObj.id,
+                path: certObj.path,
+                path_link: finalCertUrl,
+                type: certObj.type,
+                subType: certObj.subType || 'registrationCertificate',
+                createdAt: certObj.createdAt ? new Date(certObj.createdAt).toISOString() : null,
+            };
+        } else {
+            userObj.registrationCertificate = null;
         }
 
         // Handle categoryId - convert to string if it's an ObjectId

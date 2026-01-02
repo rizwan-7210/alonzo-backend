@@ -9,7 +9,6 @@ import { AdminProfileService } from './services/admin-profile.service';
 import { DashboardService } from './services/dashboard.service';
 import { AdminAuthController } from './controllers/admin-auth.controller';
 import { AdminPasswordResetController } from './controllers/admin-password-reset.controller';
-import { AdminContactController } from './controllers/admin-contact.controller';
 import { AdminFileController } from './controllers/admin-file.controller';
 import { AdminNotificationController } from './controllers/admin-notification.controller';
 import { AdminProfileController } from './controllers/admin-profile.controller';
@@ -44,7 +43,6 @@ import { CategoryModule } from '../category/category.module';
     controllers: [
         AdminAuthController,
         AdminPasswordResetController,
-        AdminContactController,
         AdminFileController,
         AdminNotificationController,
         AdminProfileController,
@@ -54,6 +52,9 @@ import { CategoryModule } from '../category/category.module';
         StripeWebhookController,
         AdminCategoryController,
         AdminPushNotificationController
+    ],
+    exports: [
+        AdminProfileService, // Export for use in VendorModule
     ],
 })
 export class AdminModule { }

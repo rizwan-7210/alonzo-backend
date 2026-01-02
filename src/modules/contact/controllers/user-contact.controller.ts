@@ -1,19 +1,34 @@
-import { Controller, Post, Body, HttpCode, HttpStatus } from '@nestjs/common';
-import { ApiTags, ApiOperation, ApiResponse, ApiBody } from '@nestjs/swagger';
+import {
+    Controller,
+    Post,
+    Body,
+    UseGuards,
+    HttpCode,
+    HttpStatus,
+} from '@nestjs/common';
+import { ApiTags, ApiOperation, ApiResponse, ApiBearerAuth, ApiBody } from '@nestjs/swagger';
 import { ContactService } from '../services/contact.service';
 import { CreateContactDto } from '../dto/create-contact.dto';
-import { Public } from '../../../common/decorators/public.decorator';
+import { CurrentUser } from '../../../common/decorators/current-user.decorator';
+import { UserRole } from '../../../common/constants/user.constants';
+import { JwtAuthGuard } from '../../../common/guards/jwt-auth.guard';
+import { RolesGuard } from '../../../common/guards/roles.guard';
+import { Roles } from '../../../common/decorators/roles.decorator';
 import { UserType } from '../../../common/constants/contact.constants';
 
-@ApiTags('Contact')
-@Controller('contact')
-export class ContactController {
-    constructor(private readonly contactService: ContactService) { }
+@ApiTags('User - Contact')
+@ApiBearerAuth()
+@UseGuards(JwtAuthGuard, RolesGuard)
+@Roles(UserRole.USER)
+@Controller('user/contacts')
+export class UserContactController {
+    constructor(
+        private readonly contactService: ContactService,
+    ) { }
 
-    @Public()
-    @Post('submit')
+    @Post()
     @HttpCode(HttpStatus.CREATED)
-    @ApiOperation({ summary: 'Submit contact form (Guest - Public)' })
+    @ApiOperation({ summary: 'Submit contact form (User)' })
     @ApiBody({ type: CreateContactDto })
     @ApiResponse({
         status: 201,
@@ -28,7 +43,7 @@ export class ContactController {
                     properties: {
                         id: { type: 'string' },
                         userId: { type: 'string', nullable: true },
-                        userType: { type: 'string', example: 'guest' },
+                        userType: { type: 'string', example: 'user' },
                         name: { type: 'string' },
                         email: { type: 'string' },
                         subject: { type: 'string' },
@@ -42,13 +57,21 @@ export class ContactController {
             },
         },
     })
-    @ApiResponse({ status: 400, description: 'Validation error' })
+    @ApiResponse({ status: 400, description: 'Validation error or userType mismatch' })
+    @ApiResponse({ status: 401, description: 'Unauthorized' })
     @ApiResponse({ status: 500, description: 'Internal server error' })
-    async submitContactForm(@Body() createDto: CreateContactDto) {
-        // Enforce userType = "guest" for public submissions
-        createDto.userType = UserType.GUEST;
-        createDto.userId = undefined; // Ensure userId is null for guests
+    async create(
+        @Body() createDto: CreateContactDto,
+        @CurrentUser() user: any,
+    ) {
+        // Enforce userType = "user" for user submissions
+        createDto.userType = UserType.USER;
         
-        return this.contactService.create(createDto);
+        return this.contactService.create(
+            createDto,
+            user?.id || user?._id?.toString(),
+            UserRole.USER,
+        );
     }
 }
+

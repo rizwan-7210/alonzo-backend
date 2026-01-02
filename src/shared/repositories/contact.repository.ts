@@ -51,4 +51,19 @@ export class ContactRepository extends BaseRepository<ContactDocument> {
             resolved,
         };
     }
+
+    async findAllWithPagination(
+        page: number = 1,
+        limit: number = 10,
+    ): Promise<{
+        data: ContactDocument[];
+        total: number;
+        page: number;
+        limit: number;
+        totalPages: number;
+        hasNext: boolean;
+        hasPrev: boolean;
+    }> {
+        return this.paginate(page, limit, {}, { sort: { createdAt: -1 } });
+    }
 }

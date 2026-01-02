@@ -22,6 +22,7 @@
     "migration:create-categories": "ts-node -r tsconfig-paths/register src/migrations/create-categories.migration.ts",
     "migration:create-products": "ts-node -r tsconfig-paths/register src/migrations/create-products.migration.ts",
     "migration:create-push-notifications": "ts-node -r tsconfig-paths/register src/migrations/create-push-notifications.migration.ts",
+    "migration:create-contact-messages": "ts-node -r tsconfig-paths/register src/migrations/create-contact-messages.migration.ts",
     "migration:migrate-avatars-to-files": "ts-node -r tsconfig-paths/register src/migrations/migrate-avatars-to-files.migration.ts",
     "migration:update-plans-schema": "ts-node -r tsconfig-paths/register src/migrations/update-plans-schema.migration.ts",
     "migration:update-user-subscriptions-schema": "ts-node -r tsconfig-paths/register src/migrations/update-user-subscriptions-schema.migration.ts",
