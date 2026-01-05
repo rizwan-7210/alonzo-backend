@@ -36,6 +36,9 @@ export class Category {
     @Prop({ type: String, required: true, trim: true })
     title: string;
 
+    @Prop({ type: String, required: false })
+    description?: string;
+
     @Prop({
         type: String,
         enum: Object.values(CategoryStatus),
@@ -45,6 +48,18 @@ export class Category {
 }
 
 export const CategorySchema = SchemaFactory.createForClass(Category);
+
+// Virtual for category file (polymorphic relationship)
+CategorySchema.virtual('file', {
+    ref: 'File',
+    localField: '_id',
+    foreignField: 'fileableId',
+    match: {
+        fileableType: 'Category',
+        isActive: true,
+    },
+    justOne: true,
+});
 
 // Indexes
 CategorySchema.index({ title: 1 });

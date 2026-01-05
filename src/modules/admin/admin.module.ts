@@ -26,9 +26,10 @@ import { AdminPushNotificationController } from './controllers/admin-push-notifi
 import { CommonModule } from 'src/common/common.module';
 import { NotificationModule } from '../notification/notification.module';
 import { CategoryModule } from '../category/category.module';
+import { FileModule } from '../file/file.module';
 
 @Module({
-    imports: [SharedModule, CommonModule, ConfigModule, JwtModule, ContactModule, NotificationModule, CategoryModule],
+    imports: [SharedModule, CommonModule, ConfigModule, JwtModule, ContactModule, NotificationModule, CategoryModule, FileModule],
     providers: [
         AdminAuthService,
         AdminPasswordResetService,

@@ -8,6 +8,11 @@ export class CreateCategoryDto {
     @IsNotEmpty()
     title: string;
 
+    @ApiProperty({ example: 'This is a pharmacy category description', required: false })
+    @IsString()
+    @IsOptional()
+    description?: string;
+
     @ApiProperty({ example: CategoryStatus.ACTIVE, enum: CategoryStatus, default: CategoryStatus.ACTIVE, required: false })
     @IsEnum(CategoryStatus)
     @IsOptional()
