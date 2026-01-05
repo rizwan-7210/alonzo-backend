@@ -71,6 +71,29 @@ export class PasswordResetRepository extends BaseRepository<PasswordResetDocumen
             .exec();
     }
 
+    async findActiveTokensByEmail(email: string): Promise<PasswordResetDocument[]> {
+        return this.passwordResetModel
+            .find({
+                email: email.toLowerCase(),
+                isUsed: false,
+                expiresAt: { $gt: new Date() }
+            })
+            .exec();
+    }
+
+    async markTokenAsUsedById(tokenId: string): Promise<PasswordResetDocument | null> {
+        return this.passwordResetModel
+            .findByIdAndUpdate(
+                tokenId,
+                {
+                    isUsed: true,
+                    usedAt: new Date()
+                },
+                { new: true }
+            )
+            .exec();
+    }
+
     async isValidToken(email: string, token: string): Promise<boolean> {
         const resetToken = await this.findByEmailAndToken(email, token);
         return resetToken !== null;
