@@ -19,6 +19,7 @@ import { PlansModule } from './modules/plans/plans.module';
 import { UserSubscriptionsModule } from './modules/user-subscriptions/user-subscriptions.module';
 import { UserModule } from './modules/user/user.module';
 import { UserAuthModule } from './modules/user-auth/user-auth.module';
+import { ProfileUpdateRequestModule } from './modules/profile-update-request/profile-update-request.module';
 import { SharedModule } from './shared/shared.module';
 
 @Module({
@@ -53,6 +54,7 @@ import { SharedModule } from './shared/shared.module';
     UserSubscriptionsModule,
     UserModule,
     UserAuthModule,
+    ProfileUpdateRequestModule,
   ],
 })
 export class AppModule { }

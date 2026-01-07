@@ -26,6 +26,8 @@ import { Product, ProductSchema } from './schemas/product.schema';
 import { ProductRepository } from './repositories/product.repository';
 import { PushNotification, PushNotificationSchema } from './schemas/push-notification.schema';
 import { PushNotificationRepository } from './repositories/push-notification.repository';
+import { ProfileUpdateRequest, ProfileUpdateRequestSchema } from './schemas/profile-update-request.schema';
+import { ProfileUpdateRequestRepository } from './repositories/profile-update-request.repository';
 import { FormatterService } from './services/formatter.service';
 
 @Module({
@@ -44,9 +46,10 @@ import { FormatterService } from './services/formatter.service';
             { name: Category.name, schema: CategorySchema },
             { name: Product.name, schema: ProductSchema },
             { name: PushNotification.name, schema: PushNotificationSchema },
+            { name: ProfileUpdateRequest.name, schema: ProfileUpdateRequestSchema },
         ]),
     ],
-    providers: [UserRepository, FileRepository, NotificationRepository, ContactRepository, PasswordResetRepository, PlanRepository, UserSubscriptionRepository, PaymentLogRepository, ReviewRepository, InvoiceRepository, CategoryRepository, ProductRepository, PushNotificationRepository, FormatterService],
-    exports: [MongooseModule, UserRepository, FileRepository, NotificationRepository, ContactRepository, PasswordResetRepository, PlanRepository, UserSubscriptionRepository, PaymentLogRepository, ReviewRepository, InvoiceRepository, CategoryRepository, ProductRepository, PushNotificationRepository, FormatterService],
+    providers: [UserRepository, FileRepository, NotificationRepository, ContactRepository, PasswordResetRepository, PlanRepository, UserSubscriptionRepository, PaymentLogRepository, ReviewRepository, InvoiceRepository, CategoryRepository, ProductRepository, PushNotificationRepository, ProfileUpdateRequestRepository, FormatterService],
+    exports: [MongooseModule, UserRepository, FileRepository, NotificationRepository, ContactRepository, PasswordResetRepository, PlanRepository, UserSubscriptionRepository, PaymentLogRepository, ReviewRepository, InvoiceRepository, CategoryRepository, ProductRepository, PushNotificationRepository, ProfileUpdateRequestRepository, FormatterService],
 })
 export class SharedModule { }

@@ -23,3 +23,9 @@ export enum Permission {
     ADMIN_ACCESS = 'admin:access',
     USER_MANAGE = 'user:manage',
 }
+
+export enum ProfileUpdateRequestStatus {
+    PENDING = 'pending',
+    APPROVED = 'approved',
+    REJECTED = 'rejected',
+}
