@@ -3,7 +3,7 @@ import { InjectModel } from '@nestjs/mongoose';
 import { Model, Types } from 'mongoose';
 import { BaseRepository } from './base.repository';
 import { Product, ProductDocument } from '../schemas/product.schema';
-import { ProductStatus } from '../../common/constants/product.constants';
+import { ProductStatus, InventoryStatus } from '../../common/constants/product.constants';
 
 @Injectable()
 export class ProductRepository extends BaseRepository<ProductDocument> {
@@ -44,6 +44,10 @@ export class ProductRepository extends BaseRepository<ProductDocument> {
     }> {
         return this.paginate(page, limit, { status: ProductStatus.ACTIVE }, {
             sort: { createdAt: -1 },
+            populate: [{
+                path: 'files',
+                select: 'name originalName path mimeType size type category subType description createdAt updatedAt',
+            }],
         });
     }
 
@@ -95,6 +99,30 @@ export class ProductRepository extends BaseRepository<ProductDocument> {
             .findOne({
                 _id: new Types.ObjectId(id),
                 status: ProductStatus.ACTIVE,
+            })
+            .exec();
+    }
+
+    async findByIdWithFiles(id: string): Promise<ProductDocument | null> {
+        if (!this.isValidObjectId(id)) {
+            return null;
+        }
+        return this.productModel
+            .findById(id)
+            .populate({
+                path: 'files',
+                select: 'name originalName path mimeType size type category subType description createdAt updatedAt',
+            })
+            .exec();
+    }
+
+    async findAllWithFiles(conditions: any = {}, sort: any = { createdAt: -1 }): Promise<ProductDocument[]> {
+        return this.productModel
+            .find(conditions)
+            .sort(sort)
+            .populate({
+                path: 'files',
+                select: 'name originalName path mimeType size type category subType description createdAt updatedAt',
             })
             .exec();
     }

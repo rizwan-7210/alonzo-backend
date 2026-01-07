@@ -1,52 +1,65 @@
 /**
- * Migration: Create Products Collection
+ * Migration: Create Products Table
  * 
  * This migration:
- * 1. Ensures the products collection exists in MongoDB
- * 2. Creates indexes for better query performance
+ * 1. Creates the products collection in MongoDB
+ * 2. Optionally seeds initial products if needed
  * 
  * Run this migration with: npm run migration:create-products
  * Or import and run manually in your application startup
  * 
  * Note: In MongoDB, collections are created automatically when first document is inserted.
- * This migration script is mainly for documentation and index creation.
+ * This migration script is mainly for documentation and optional seeding.
  */
 
 import { NestFactory } from '@nestjs/core';
 import { AppModule } from '../app.module';
 import { ProductRepository } from '../shared/repositories/product.repository';
-import { getModelToken } from '@nestjs/mongoose';
-import { Product } from '../shared/schemas/product.schema';
+import { ProductStatus, InventoryStatus } from '../common/constants/product.constants';
 
 export async function createProductsMigration() {
-    console.log('🚀 Starting migration: Create Products Collection...');
+    console.log('🚀 Starting migration: Create Products Table...');
 
     const app = await NestFactory.createApplicationContext(AppModule);
-    const productModel = app.get(getModelToken(Product.name));
+    const productRepository = app.get(ProductRepository);
 
     try {
-        // Check if products collection exists and has documents
-        const productCount = await productModel.countDocuments().exec();
-        console.log(`📊 Found ${productCount} products in collection`);
+        // Check if products already exist
+        const existingProducts = await productRepository.findAll();
+        console.log(`📊 Found ${existingProducts.length} existing products...`);
 
-        // Ensure indexes exist (Mongoose will create them automatically, but we can verify)
-        const indexes = await productModel.collection.getIndexes();
-        console.log('\n📑 Existing indexes:');
-        console.log(JSON.stringify(indexes, null, 2));
+        if (existingProducts.length > 0) {
+            console.log('✅ Products collection already exists with data.');
+            console.log('\n📋 Existing Products:');
+            existingProducts.forEach((product) => {
+                const prod = product.toObject ? product.toObject() : product;
+                console.log(`   - ${prod.title} (${prod.status}, ${prod.inventoryStatus})`);
+            });
+        } else {
+            console.log('ℹ️  Products collection is empty. You can add products through the API.');
+        }
 
-        // Verify required indexes
-        const requiredIndexes = ['userId', 'status', 'createdAt', 'title_text'];
-        const existingIndexNames = Object.keys(indexes);
-        
-        console.log('\n✅ Index verification:');
-        requiredIndexes.forEach(indexName => {
-            const exists = existingIndexNames.some(name => name.includes(indexName));
-            console.log(`   ${exists ? '✅' : '⚠️ '} ${indexName} index ${exists ? 'exists' : 'missing'}`);
-        });
+        // Count products by status
+        const activeCount = await productRepository.count({ status: ProductStatus.ACTIVE });
+        const inactiveCount = await productRepository.count({ status: ProductStatus.INACTIVE });
+
+        // Count products by inventory status
+        const inStockCount = await productRepository.count({ inventoryStatus: InventoryStatus.IN_STOCK });
+        const outOfStockCount = await productRepository.count({ inventoryStatus: InventoryStatus.OUT_OF_STOCK });
+
+        console.log('\n📊 Product Status Distribution:');
+        console.log(`   Active: ${activeCount}`);
+        console.log(`   Inactive: ${inactiveCount}`);
+        console.log(`   Total: ${existingProducts.length}`);
+
+        console.log('\n📦 Inventory Status Distribution:');
+        console.log(`   In Stock: ${inStockCount}`);
+        console.log(`   Out of Stock: ${outOfStockCount}`);
 
         console.log('\n✅ Migration completed successfully!');
-        console.log('📝 Note: Products collection is ready to use.');
-        console.log('   The collection will be created automatically when first product is inserted.');
+        console.log('\n💡 Note: Products can be created through the API endpoints.');
+        console.log('💡 Note: Products require at least 1 image (max 10 images).');
+        console.log('💡 Note: Only vendors can create and manage products.');
     } catch (error) {
         console.error('❌ Migration failed:', error);
         throw error;
@@ -59,12 +72,11 @@ export async function createProductsMigration() {
 if (require.main === module) {
     createProductsMigration()
         .then(() => {
-            console.log('✅ Migration script completed');
+            console.log('Migration script completed');
             process.exit(0);
         })
         .catch((error) => {
-            console.error('❌ Migration script failed:', error);
+            console.error('Migration script failed:', error);
             process.exit(1);
         });
 }
-

@@ -3,3 +3,8 @@ export enum ProductStatus {
     INACTIVE = 'inactive',
 }
 
+export enum InventoryStatus {
+    IN_STOCK = 'inStock',
+    OUT_OF_STOCK = 'outOfStock',
+}
+

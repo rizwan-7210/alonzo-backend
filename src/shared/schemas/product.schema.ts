@@ -1,6 +1,6 @@
 import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose';
 import { Document, Types } from 'mongoose';
-import { ProductStatus } from '../../common/constants/product.constants';
+import { ProductStatus, InventoryStatus } from '../../common/constants/product.constants';
 
 export type ProductDocument = Product & Document;
 
@@ -59,6 +59,16 @@ export class Product {
         default: ProductStatus.ACTIVE,
     })
     status: ProductStatus;
+
+    @Prop({
+        type: String,
+        enum: Object.values(InventoryStatus),
+        default: InventoryStatus.IN_STOCK,
+    })
+    inventoryStatus: InventoryStatus;
+
+    @Prop({ type: String })
+    description?: string;
 }
 
 export const ProductSchema = SchemaFactory.createForClass(Product);
@@ -66,6 +76,7 @@ export const ProductSchema = SchemaFactory.createForClass(Product);
 // Indexes
 ProductSchema.index({ userId: 1 });
 ProductSchema.index({ status: 1 });
+ProductSchema.index({ inventoryStatus: 1 });
 ProductSchema.index({ createdAt: -1 });
 ProductSchema.index({ title: 'text' }); // Text search index
 
@@ -75,5 +86,16 @@ ProductSchema.virtual('user', {
     localField: 'userId',
     foreignField: '_id',
     justOne: true,
+});
+
+// Virtual for product files (polymorphic relationship)
+ProductSchema.virtual('files', {
+    ref: 'File',
+    localField: '_id',
+    foreignField: 'fileableId',
+    match: {
+        fileableType: 'Product',
+        isActive: true,
+    },
 });
 
