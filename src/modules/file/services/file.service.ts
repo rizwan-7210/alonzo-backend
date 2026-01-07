@@ -1,7 +1,7 @@
 import { Injectable, BadRequestException, NotFoundException } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
-import { createWriteStream, existsSync, mkdirSync } from 'fs';
-import { join } from 'path';
+import { createWriteStream, existsSync, mkdirSync, renameSync } from 'fs';
+import { join, resolve } from 'path';
 import { Types } from 'mongoose';
 import { FileRepository } from '../../../shared/repositories/file.repository';
 import { FileType, FileCategory, FileSubType, FileMimeTypes } from '../../../common/constants/file.constants';
@@ -49,14 +49,31 @@ export class FileService {
         const fileName = `${fileableType}-${fileableId}-${Date.now()}.${fileExtension}`;
         const filePath = join(uploadPath, fileName);
 
-        // Save file to disk with proper promise handling
-        await new Promise<void>((resolve, reject) => {
-            const writeStream = createWriteStream(filePath);
-            writeStream.write(file.buffer);
-            writeStream.end();
-            writeStream.on('finish', () => resolve());
-            writeStream.on('error', reject);
-        });
+        // Handle file saving based on storage type
+        // If file.path exists, multer used diskStorage - rename the file
+        // If file.buffer exists, multer used memoryStorage - write buffer to disk
+        if (file.path) {
+            // File already saved by multer (diskStorage), just rename it
+            // Resolve paths to absolute to ensure compatibility
+            const sourcePath = resolve(file.path);
+            const targetPath = resolve(filePath);
+            try {
+                renameSync(sourcePath, targetPath);
+            } catch (error: any) {
+                throw new BadRequestException(`Failed to save file: ${error.message}`);
+            }
+        } else if (file.buffer) {
+            // File in memory (memoryStorage), write buffer to disk
+            await new Promise<void>((resolve, reject) => {
+                const writeStream = createWriteStream(filePath);
+                writeStream.write(file.buffer);
+                writeStream.end();
+                writeStream.on('finish', () => resolve());
+                writeStream.on('error', reject);
+            });
+        } else {
+            throw new BadRequestException('File data is missing. Neither file.path nor file.buffer is available.');
+        }
 
         // Prepare file data with proper ObjectId conversion
         const fileData = {

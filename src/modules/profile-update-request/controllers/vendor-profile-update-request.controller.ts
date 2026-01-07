@@ -118,18 +118,25 @@ export class VendorProfileUpdateRequestController {
             }
         }
 
-        const request = await this.profileUpdateRequestService.createRequest(
-            user.id,
-            createDto,
-            files.profileImage?.[0],
-            files.pharmacyLicense?.[0],
-            files.registrationCertificate?.[0],
-        );
+        try {
+            const request = await this.profileUpdateRequestService.createRequest(
+                user.id,
+                createDto,
+                files.profileImage?.[0],
+                files.pharmacyLicense?.[0],
+                files.registrationCertificate?.[0],
+            );
 
-        return {
-            message: 'Profile update request created successfully',
-            data: request,
-        };
+            return {
+                success: true,
+                message: 'Profile update request created successfully',
+                data: request,
+            };
+        } catch (error: any) {
+            throw new BadRequestException(
+                error.message || 'Failed to create profile update request',
+            );
+        }
     }
 }
 

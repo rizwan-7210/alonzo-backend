@@ -66,57 +66,78 @@ export class ProfileUpdateRequestService {
 
         // Handle file uploads if provided
         if (profileImage) {
-            const profileImageFile = await this.fileService.uploadFile(
-                profileImage,
-                request._id.toString(),
-                'ProfileUpdateRequest',
-                FileCategory.PROFILE,
-                undefined,
-                userId,
-                user,
-            );
-            // Update file with subType
-            await this.fileRepository.update(profileImageFile._id.toString(), {
-                subType: FileSubType.PROFILE_IMAGE,
-            } as any);
+            try {
+                const profileImageFile = await this.fileService.uploadFile(
+                    profileImage,
+                    request._id.toString(),
+                    'ProfileUpdateRequest',
+                    FileCategory.PROFILE,
+                    undefined,
+                    userId,
+                    user,
+                );
+                // Update file with subType
+                await this.fileRepository.update(profileImageFile._id.toString(), {
+                    subType: FileSubType.PROFILE_IMAGE,
+                } as any);
+            } catch (error: any) {
+                this.logger.error(`Failed to upload profile image: ${error.message}`, error.stack);
+                throw new BadRequestException(`Failed to upload profile image: ${error.message}`);
+            }
         }
 
         if (pharmacyLicense) {
-            const licenseFile = await this.fileService.uploadFile(
-                pharmacyLicense,
-                request._id.toString(),
-                'ProfileUpdateRequest',
-                FileCategory.DOCUMENT,
-                undefined,
-                userId,
-                user,
-            );
-            await this.fileRepository.update(licenseFile._id.toString(), {
-                subType: FileSubType.PHARMACY_LICENSE,
-            } as any);
+            try {
+                const licenseFile = await this.fileService.uploadFile(
+                    pharmacyLicense,
+                    request._id.toString(),
+                    'ProfileUpdateRequest',
+                    FileCategory.DOCUMENT,
+                    undefined,
+                    userId,
+                    user,
+                );
+                await this.fileRepository.update(licenseFile._id.toString(), {
+                    subType: FileSubType.PHARMACY_LICENSE,
+                } as any);
+            } catch (error: any) {
+                this.logger.error(`Failed to upload pharmacy license: ${error.message}`, error.stack);
+                throw new BadRequestException(`Failed to upload pharmacy license: ${error.message}`);
+            }
         }
 
         if (registrationCertificate) {
-            const certFile = await this.fileService.uploadFile(
-                registrationCertificate,
-                request._id.toString(),
-                'ProfileUpdateRequest',
-                FileCategory.DOCUMENT,
-                undefined,
-                userId,
-                user,
-            );
-            await this.fileRepository.update(certFile._id.toString(), {
-                subType: FileSubType.REGISTRATION_CERTIFICATE,
-            } as any);
+            try {
+                const certFile = await this.fileService.uploadFile(
+                    registrationCertificate,
+                    request._id.toString(),
+                    'ProfileUpdateRequest',
+                    FileCategory.DOCUMENT,
+                    undefined,
+                    userId,
+                    user,
+                );
+                await this.fileRepository.update(certFile._id.toString(), {
+                    subType: FileSubType.REGISTRATION_CERTIFICATE,
+                } as any);
+            } catch (error: any) {
+                this.logger.error(`Failed to upload registration certificate: ${error.message}`, error.stack);
+                throw new BadRequestException(`Failed to upload registration certificate: ${error.message}`);
+            }
         }
 
         // Fetch request with relations
-        const requestWithRelations = await this.profileUpdateRequestRepository.findByIdWithRelations(
-            request._id.toString(),
-        );
-
-        return requestWithRelations;
+        // If populate fails, return the request without relations
+        try {
+            const requestWithRelations = await this.profileUpdateRequestRepository.findByIdWithRelations(
+                request._id.toString(),
+            );
+            return requestWithRelations || request;
+        } catch (error) {
+            // Log error but return the request anyway
+            this.logger.warn(`Failed to populate relations for request ${request._id}:`, error);
+            return request;
+        }
     }
 
     async listRequests(listDto: ListProfileUpdateRequestsDto) {
