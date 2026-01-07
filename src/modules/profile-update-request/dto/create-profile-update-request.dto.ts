@@ -17,24 +17,24 @@ export class CreateProfileUpdateRequestDto {
     @IsOptional()
     dial_code?: string;
 
-    @ApiPropertyOptional({ example: '507f1f77bcf86cd799439011' })
+    @ApiProperty({ example: '507f1f77bcf86cd799439011' })
     @IsMongoId()
-    @IsOptional()
-    categoryId?: string;
+    @IsNotEmpty()
+    categoryId: string;
 
-    @ApiPropertyOptional({ example: '123 Main Street' })
+    @ApiProperty({ example: '123 Main Street' })
     @IsString()
-    @IsOptional()
-    address?: string;
+    @IsNotEmpty()
+    address: string;
 
-    @ApiPropertyOptional({ example: 'New York, NY' })
+    @ApiProperty({ example: 'New York, NY' })
     @IsString()
-    @IsOptional()
-    location?: string;
+    @IsNotEmpty()
+    location: string;
 
-    @ApiPropertyOptional({ example: 'https://example.com' })
+    @ApiProperty({ example: 'https://example.com' })
     @IsUrl()
-    @IsOptional()
-    website?: string;
+    @IsNotEmpty()
+    website: string;
 }
 
