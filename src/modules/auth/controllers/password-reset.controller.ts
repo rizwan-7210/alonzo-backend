@@ -1,13 +1,14 @@
 import { Controller, Post, Body, HttpCode, HttpStatus } from '@nestjs/common';
-import { ApiTags, ApiOperation, ApiResponse } from '@nestjs/swagger';
+import { ApiTags, ApiOperation, ApiResponse, ApiExtraModels } from '@nestjs/swagger';
 // import { Public } from '../../../../common/decorators/public.decorator';
 import { PasswordResetService } from '../services/password-reset.service';
-import { ForgotPasswordDto } from '../dto/forgot-password.dto';
+import { AuthForgotPasswordDto } from '../dto/forgot-password.dto';
 import { VerifyResetCodeDto } from '../dto/verify-reset-code.dto';
-import { ResetPasswordDto } from '../dto/reset-password.dto';
+import { AuthResetPasswordDto } from '../dto/reset-password.dto';
 import { Public } from 'src/common/decorators/public.decorator';
 
 @ApiTags('Auth - Password Reset')
+@ApiExtraModels(AuthForgotPasswordDto, AuthResetPasswordDto)
 @Controller('auth/password')
 export class PasswordResetController {
     constructor(private readonly passwordResetService: PasswordResetService) { }
@@ -17,7 +18,7 @@ export class PasswordResetController {
     @HttpCode(HttpStatus.OK)
     @ApiOperation({ summary: 'Initiate password reset' })
     @ApiResponse({ status: 200, description: 'Reset code sent successfully' })
-    async forgotPassword(@Body() forgotPasswordDto: ForgotPasswordDto) {
+    async forgotPassword(@Body() forgotPasswordDto: AuthForgotPasswordDto) {
         return this.passwordResetService.initiatePasswordReset(forgotPasswordDto);
     }
 
@@ -35,7 +36,7 @@ export class PasswordResetController {
     @HttpCode(HttpStatus.OK)
     @ApiOperation({ summary: 'Reset password with code' })
     @ApiResponse({ status: 200, description: 'Password reset successfully' })
-    async resetPassword(@Body() resetPasswordDto: ResetPasswordDto) {
+    async resetPassword(@Body() resetPasswordDto: AuthResetPasswordDto) {
         return this.passwordResetService.resetPassword(resetPasswordDto);
     }
 
@@ -44,7 +45,7 @@ export class PasswordResetController {
     @HttpCode(HttpStatus.OK)
     @ApiOperation({ summary: 'Resend reset code' })
     @ApiResponse({ status: 200, description: 'Reset code resent successfully' })
-    async resendResetCode(@Body() forgotPasswordDto: ForgotPasswordDto) {
+    async resendResetCode(@Body() forgotPasswordDto: AuthForgotPasswordDto) {
         return this.passwordResetService.resendResetCode(forgotPasswordDto.email);
     }
 }

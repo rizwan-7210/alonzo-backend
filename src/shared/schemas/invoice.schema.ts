@@ -18,13 +18,13 @@ export type InvoiceDocument = Invoice & Document;
     },
 })
 export class Invoice {
-    @Prop({ type: MongooseSchema.Types.ObjectId, ref: 'Booking', required: true, unique: true })
+    @Prop({ type: MongooseSchema.Types.ObjectId, ref: 'Booking', required: true })
     booking: MongooseSchema.Types.ObjectId;
 
     @Prop({ type: MongooseSchema.Types.ObjectId, ref: 'User', required: true })
     user: MongooseSchema.Types.ObjectId;
 
-    @Prop({ type: String, required: true, unique: true })
+    @Prop({ type: String, required: true })
     invoiceNumber: string;
 
     @Prop({ type: String, required: true })

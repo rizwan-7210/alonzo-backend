@@ -10,7 +10,7 @@ export type ReviewDocument = Review & Document;
     },
 })
 export class Review {
-    @Prop({ type: MongooseSchema.Types.ObjectId, ref: 'Booking', required: true, unique: true })
+    @Prop({ type: MongooseSchema.Types.ObjectId, ref: 'Booking', required: true })
     booking: MongooseSchema.Types.ObjectId;
 
     @Prop({ type: MongooseSchema.Types.ObjectId, ref: 'User', required: true })

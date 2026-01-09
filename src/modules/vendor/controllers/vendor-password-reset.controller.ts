@@ -1,9 +1,9 @@
 import { Controller, Post, Body, HttpCode, HttpStatus, UsePipes, ValidationPipe } from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiResponse } from '@nestjs/swagger';
 import { VendorPasswordResetService } from '../services/vendor-password-reset.service';
-import { ForgotPasswordDto } from '../../auth/dto/forgot-password.dto';
+import { AuthForgotPasswordDto } from '../../auth/dto/forgot-password.dto';
 import { VerifyResetCodeDto } from '../../auth/dto/verify-reset-code.dto';
-import { ResetPasswordDto } from '../../auth/dto/reset-password.dto';
+import { AuthResetPasswordDto } from '../../auth/dto/reset-password.dto';
 import { Public } from '../../../common/decorators/public.decorator';
 
 @ApiTags('Vendor - Password Reset')
@@ -25,7 +25,7 @@ export class VendorPasswordResetController {
     @ApiOperation({ summary: 'Initiate password reset for vendor' })
     @ApiResponse({ status: 200, description: 'Reset code sent successfully' })
     @ApiResponse({ status: 400, description: 'Invalid email or not a vendor account' })
-    async forgotPassword(@Body() forgotPasswordDto: ForgotPasswordDto) {
+    async forgotPassword(@Body() forgotPasswordDto: AuthForgotPasswordDto) {
         return this.vendorPasswordResetService.initiatePasswordReset(forgotPasswordDto);
     }
 
@@ -61,7 +61,7 @@ export class VendorPasswordResetController {
     @ApiOperation({ summary: 'Reset password for vendor' })
     @ApiResponse({ status: 200, description: 'Password reset successfully' })
     @ApiResponse({ status: 400, description: 'Invalid reset code or password requirements not met' })
-    async resetPassword(@Body() resetPasswordDto: ResetPasswordDto) {
+    async resetPassword(@Body() resetPasswordDto: AuthResetPasswordDto) {
         return this.vendorPasswordResetService.resetPassword(resetPasswordDto);
     }
 

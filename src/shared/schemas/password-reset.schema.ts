@@ -20,7 +20,7 @@ export class PasswordReset {
   @Prop({ type: Date })
   usedAt: Date;
 
-  @Prop({ type: Date, expires: 900 }) // 15 minutes in seconds
+  @Prop({ type: Date })
   expiresAt: Date;
 
   @Prop()

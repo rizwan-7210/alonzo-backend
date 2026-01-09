@@ -1,5 +1,5 @@
 import { Controller, Post, Put, Body, HttpCode, HttpStatus, UseGuards } from '@nestjs/common';
-import { ApiTags, ApiOperation, ApiResponse, ApiBearerAuth } from '@nestjs/swagger';
+import { ApiTags, ApiOperation, ApiResponse, ApiBearerAuth, ApiExtraModels } from '@nestjs/swagger';
 import { UserAuthService } from '../services/user-auth.service';
 import { RegisterDto } from '../dto/register.dto';
 import { LoginDto } from '../dto/login.dto';
@@ -15,6 +15,7 @@ import { UserRole } from 'src/common/constants/user.constants';
 import { CurrentUser } from 'src/common/decorators/current-user.decorator';
 
 @ApiTags('User - Authentication')
+@ApiExtraModels(ForgotPasswordDto, ResetPasswordDto)
 @Controller('auth')
 export class AuthController {
     constructor(private readonly userAuthService: UserAuthService) { }

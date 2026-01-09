@@ -5,9 +5,9 @@ import { UserRepository } from 'src/shared/repositories/user.repository';
 import { PasswordResetRepository } from 'src/shared/repositories/password-reset.repository';
 import { NotificationService } from 'src/modules/notification/services/notification.service';
 import { EmailService } from 'src/common/services/email.service';
-import { ForgotPasswordDto } from '../../auth/dto/forgot-password.dto';
+import { AuthForgotPasswordDto } from '../../auth/dto/forgot-password.dto';
 import { VerifyResetCodeDto } from '../../auth/dto/verify-reset-code.dto';
-import { ResetPasswordDto } from '../../auth/dto/reset-password.dto';
+import { AuthResetPasswordDto } from '../../auth/dto/reset-password.dto';
 import { NotificationType } from 'src/shared/schemas/notification.schema';
 import { UserRole } from 'src/common/constants/user.constants';
 
@@ -21,7 +21,7 @@ export class VendorPasswordResetService {
         private readonly configService: ConfigService,
     ) { }
 
-    async initiatePasswordReset(forgotPasswordDto: ForgotPasswordDto) {
+    async initiatePasswordReset(forgotPasswordDto: AuthForgotPasswordDto) {
         const { email } = forgotPasswordDto;
 
         // Validate email format
@@ -127,7 +127,7 @@ export class VendorPasswordResetService {
         };
     }
 
-    async resetPassword(resetPasswordDto: ResetPasswordDto) {
+    async resetPassword(resetPasswordDto: AuthResetPasswordDto) {
         const { email, token, password, passwordConfirmation } = resetPasswordDto;
         
         if (!email || !this.isValidEmail(email)) {
