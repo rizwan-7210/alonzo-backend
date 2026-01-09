@@ -5,9 +5,11 @@ import { EventEmitterModule } from '@nestjs/event-emitter';
 import { SharedModule } from '../../shared/shared.module';
 import { NotificationService } from './services/notification.service';
 import { NotificationGateway } from './gateways/notification.gateway';
+import { PublicNotificationController } from './controllers/public-notification.controller';
 
 @Module({
     imports: [SharedModule, ConfigModule, JwtModule, EventEmitterModule.forRoot()],
+    controllers: [PublicNotificationController],
     providers: [NotificationService, NotificationGateway],
     exports: [NotificationService],
 })

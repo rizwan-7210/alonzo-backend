@@ -7,10 +7,12 @@ import { VendorPasswordResetController } from './controllers/vendor-password-res
 import { VendorDashboardController } from './controllers/vendor-dashboard.controller';
 import { VendorProfileController } from './controllers/vendor-profile.controller';
 import { VendorSubscriptionLogController } from './controllers/vendor-subscription-log.controller';
+import { VendorNotificationController } from './controllers/vendor-notification.controller';
 import { VendorAuthService } from './services/vendor-auth.service';
 import { VendorPasswordResetService } from './services/vendor-password-reset.service';
 import { VendorDashboardService } from './services/vendor-dashboard.service';
 import { VendorSubscriptionLogService } from './services/vendor-subscription-log.service';
+import { VendorNotificationService } from './services/vendor-notification.service';
 import { SharedModule } from '../../shared/shared.module';
 import { CommonModule } from '../../common/common.module';
 import { NotificationModule } from '../notification/notification.module';
@@ -34,9 +36,10 @@ import { AdminModule } from '../admin/admin.module';
         VendorDashboardController,
         VendorProfileController,
         VendorSubscriptionLogController,
+        VendorNotificationController,
     ],
-    providers: [VendorAuthService, VendorPasswordResetService, VendorDashboardService, VendorSubscriptionLogService],
-    exports: [VendorAuthService, VendorPasswordResetService, VendorDashboardService, VendorSubscriptionLogService],
+    providers: [VendorAuthService, VendorPasswordResetService, VendorDashboardService, VendorSubscriptionLogService, VendorNotificationService],
+    exports: [VendorAuthService, VendorPasswordResetService, VendorDashboardService, VendorSubscriptionLogService, VendorNotificationService],
 })
 export class VendorModule { }
 

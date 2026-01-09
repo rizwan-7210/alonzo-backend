@@ -18,6 +18,7 @@ export class NotificationRepository extends BaseRepository<NotificationDocument>
         limit: number,
         status?: NotificationStatus
     ) {
+        // Only get notifications that belong to the specified recipient (user)
         const query: any = { recipient: new Types.ObjectId(recipientId) };
         if (status) {
             query.status = status;
@@ -40,6 +41,8 @@ export class NotificationRepository extends BaseRepository<NotificationDocument>
     }
 
     async markAsRead(notificationId: string): Promise<NotificationDocument | null> {
+        // Note: Ownership should be verified before calling this method
+        // The service layer ensures only user's own notifications are updated
         return this.notificationModel
             .findByIdAndUpdate(
                 notificationId,
@@ -53,6 +56,7 @@ export class NotificationRepository extends BaseRepository<NotificationDocument>
     }
 
     async markAllAsRead(recipientId: string): Promise<{ modifiedCount: number }> {
+        // Only update notifications that belong to the specified recipient (user)
         const result = await this.notificationModel
             .updateMany(
                 {
@@ -69,7 +73,41 @@ export class NotificationRepository extends BaseRepository<NotificationDocument>
         return { modifiedCount: result.modifiedCount };
     }
 
+    async markAllAsUnread(recipientId: string): Promise<{ modifiedCount: number }> {
+        // Only update notifications that belong to the specified recipient (user)
+        const result = await this.notificationModel
+            .updateMany(
+                {
+                    recipient: new Types.ObjectId(recipientId),
+                    status: NotificationStatus.READ
+                },
+                {
+                    $set: { status: NotificationStatus.UNREAD },
+                    $unset: { readAt: '' }
+                }
+            )
+            .exec();
+
+        return { modifiedCount: result.modifiedCount };
+    }
+
+    async markAsUnread(notificationId: string): Promise<NotificationDocument | null> {
+        // Note: Ownership should be verified before calling this method
+        // The service layer ensures only user's own notifications are updated
+        return this.notificationModel
+            .findByIdAndUpdate(
+                notificationId,
+                {
+                    $set: { status: NotificationStatus.UNREAD },
+                    $unset: { readAt: '' }
+                },
+                { new: true }
+            )
+            .exec();
+    }
+
     async getUnreadCount(recipientId: string): Promise<number> {
+        // Only count unread notifications that belong to the specified recipient (user)
         return this.notificationModel
             .countDocuments({
                 recipient: new Types.ObjectId(recipientId),
