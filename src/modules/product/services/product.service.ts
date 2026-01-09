@@ -118,20 +118,38 @@ export class ProductService {
             throw new BadRequestException('hasDiscount must be true when discountPercentage is provided');
         }
 
-        // Validate files if provided
-        if (files !== undefined) {
-            if (files.length === 0) {
-                throw new BadRequestException('At least 1 image is required');
-            }
+        // Get existing files for validation and deletion
+        const existingFiles = await this.fileRepository.findByEntity(id, 'Product');
+        const existingFilesCount = existingFiles.length;
+        const { fileDeleteIds } = updateProductDto;
+        const filesToDeleteCount = fileDeleteIds && Array.isArray(fileDeleteIds) && fileDeleteIds.length > 0 ? fileDeleteIds.length : 0;
 
-            if (files.length > 10) {
-                throw new BadRequestException('Maximum 10 images allowed');
-            }
-
+        // Validate new files if provided
+        if (files !== undefined && files.length > 0) {
             // Validate file types (only images)
             for (const file of files) {
                 if (!FileMimeTypes[FileType.IMAGE].includes(file.mimetype)) {
                     throw new BadRequestException(`File ${file.originalname} is not a valid image. Only jpeg, png, and webp are allowed.`);
+                }
+            }
+
+            // Calculate total files after adding new ones and removing deleted ones
+            const totalFilesAfterUpdate = existingFilesCount - filesToDeleteCount + files.length;
+
+            if (totalFilesAfterUpdate > 10) {
+                throw new BadRequestException(`Maximum 10 images allowed. After this update, you would have ${totalFilesAfterUpdate} images.`);
+            }
+
+            if (totalFilesAfterUpdate < 1) {
+                throw new BadRequestException('Product must have at least 1 image');
+            }
+        } else {
+            // If no new files are being added, check if deletion would leave product without images
+            if (filesToDeleteCount > 0) {
+                const totalFilesAfterUpdate = existingFilesCount - filesToDeleteCount;
+
+                if (totalFilesAfterUpdate < 1) {
+                    throw new BadRequestException('Product must have at least 1 image. Cannot delete all images.');
                 }
             }
         }
@@ -168,12 +186,21 @@ export class ProductService {
             throw new NotFoundException('Product not found');
         }
 
-        // Handle file updates if provided
-        if (files !== undefined) {
-            // Remove existing files
-            await this.removeProductFiles(id);
+        // Handle file deletions if provided
+        if (fileDeleteIds && Array.isArray(fileDeleteIds) && fileDeleteIds.length > 0) {
+            // Verify files belong to this product before deleting (use existingFiles we already fetched)
+            const productFileIds = existingFiles.map(f => f._id.toString());
 
-            // Upload new files
+            for (const fileId of fileDeleteIds) {
+                if (!productFileIds.includes(fileId)) {
+                    throw new BadRequestException(`File with ID ${fileId} does not belong to this product`);
+                }
+                await this.fileRepository.softDelete(fileId);
+            }
+        }
+
+        // Handle file uploads if provided (add new files, don't replace all)
+        if (files !== undefined && files.length > 0) {
             try {
                 for (const file of files) {
                     await this.fileService.uploadFile(

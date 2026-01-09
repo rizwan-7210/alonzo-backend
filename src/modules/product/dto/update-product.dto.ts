@@ -1,4 +1,4 @@
-import { IsString, IsNumber, IsBoolean, IsOptional, IsEnum, Min, Max, ValidateIf } from 'class-validator';
+import { IsString, IsNumber, IsBoolean, IsOptional, IsEnum, Min, Max, ValidateIf, IsArray, IsMongoId } from 'class-validator';
 import { ApiProperty } from '@nestjs/swagger';
 import { ProductStatus, InventoryStatus } from 'src/common/constants/product.constants';
 import { Type, Transform } from 'class-transformer';
@@ -65,5 +65,36 @@ export class UpdateProductDto {
     @IsEnum(InventoryStatus)
     @IsOptional()
     inventoryStatus?: InventoryStatus;
+
+    @ApiProperty({ 
+        example: ['fileId1', 'fileId2'], 
+        required: false, 
+        description: 'Array of file IDs to delete from the product. Can be sent as JSON string in form-data or as array',
+        type: [String]
+    })
+    @Transform(({ value }) => {
+        // Handle empty string, null, undefined
+        if (value === '' || value === null || value === undefined) return undefined;
+        
+        // If already an array, return it
+        if (Array.isArray(value)) return value;
+        
+        // If it's a string, try to parse as JSON (for form-data JSON strings)
+        if (typeof value === 'string') {
+            try {
+                const parsed = JSON.parse(value);
+                return Array.isArray(parsed) ? parsed : undefined;
+            } catch {
+                // If not JSON, treat as single value and wrap in array
+                return [value];
+            }
+        }
+        
+        return value;
+    })
+    @IsArray()
+    @IsOptional()
+    @IsMongoId({ each: true, message: 'Each fileDeleteId must be a valid MongoDB ObjectId' })
+    fileDeleteIds?: string[];
 }
 

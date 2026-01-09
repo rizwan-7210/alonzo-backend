@@ -126,10 +126,15 @@ export class VendorProductController {
                 description: { type: 'string', example: 'High-quality paracetamol tablets' },
                 status: { type: 'string', enum: Object.values(ProductStatus) },
                 inventoryStatus: { type: 'string', enum: Object.values(InventoryStatus) },
+                fileDeleteIds: {
+                    type: 'array',
+                    items: { type: 'string' },
+                    description: 'Array of file IDs to delete. Can be sent as JSON string or array. Example: ["fileId1", "fileId2"]',
+                },
                 files: {
                     type: 'array',
                     items: { type: 'string', format: 'binary' },
-                    description: 'Product images (min 1, max 10, only jpeg, png, webp)',
+                    description: 'New product images to add (optional, will be added to existing images). Max 10 total images allowed.',
                 },
             },
         },
