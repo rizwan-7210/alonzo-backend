@@ -406,13 +406,20 @@ export class UsersService {
     /**
      * List active approved vendors (for user-side APIs)
      * Filters: role = VENDOR, status = ACTIVE, accountStatus = APPROVED
+     * Optional filters: categoryId, search (by full name), sortByName
      */
     async listActiveVendors(queryDto: ListVendorsDto) {
         try {
-            const page = queryDto.page;
-            const limit = queryDto.limit;
+            const page = queryDto.page || 1;
+            const limit = queryDto.limit || 10;
 
-            const result = await this.usersRepository.findActiveApprovedVendorsWithPagination(page, limit, queryDto.search);
+            const result = await this.usersRepository.findActiveApprovedVendorsWithPagination(
+                page,
+                limit,
+                queryDto.search,
+                queryDto.categoryId,
+                queryDto.sortByName,
+            );
 
             // Format vendors with profileImage and categoryId
             const formattedVendors = result.data.map((vendor: any) => {

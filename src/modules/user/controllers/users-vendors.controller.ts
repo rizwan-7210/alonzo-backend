@@ -8,7 +8,7 @@ import {
 } from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiResponse, ApiParam, ApiQuery } from '@nestjs/swagger';
 import { UsersService } from '../services/users.service';
-import { ListVendorsDto } from '../dto/list-vendors.dto';
+import { ListVendorsDto, SortByName } from '../dto/list-vendors.dto';
 import { Public } from '../../../common/decorators/public.decorator';
 
 @ApiTags('Users - Vendors')
@@ -22,9 +22,11 @@ export class UsersVendorsController {
     @Get()
     @HttpCode(HttpStatus.OK)
     @ApiOperation({ summary: 'Get list of active approved vendors (user-side)' })
-    @ApiQuery({ name: 'page', required: true, type: Number, example: 1, description: 'Page number (min: 1)' })
-    @ApiQuery({ name: 'limit', required: true, type: Number, example: 10, description: 'Items per page (min: 1, max: 100)' })
-    @ApiQuery({ name: 'search', required: false, type: String, description: 'Search by name or email' })
+    @ApiQuery({ name: 'page', required: false, type: Number, example: 1, description: 'Page number (min: 1, default: 1)' })
+    @ApiQuery({ name: 'limit', required: false, type: Number, example: 10, description: 'Items per page (min: 1, max: 100, default: 10)' })
+    @ApiQuery({ name: 'search', required: false, type: String, description: 'Search vendors by full name (firstName + lastName)' })
+    @ApiQuery({ name: 'categoryId', required: false, type: String, description: 'Filter vendors by category ID' })
+    @ApiQuery({ name: 'sortByName', required: false, enum: SortByName, description: 'Sort vendors by full name (ASC or DESC)' })
     @ApiResponse({
         status: 200,
         description: 'Vendors retrieved successfully',
