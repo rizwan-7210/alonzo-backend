@@ -136,7 +136,7 @@ export class UsersRepository extends BaseRepository<UserDocument> {
         categoryId?: string,
         sortByName?: 'ASC' | 'DESC',
     ) {
-        const conditions: any = {
+        let conditions: any = {
             role: UserRole.VENDOR,
             status: UserStatus.ACTIVE,
             accountStatus: AccountStatus.APPROVED,

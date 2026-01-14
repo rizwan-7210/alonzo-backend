@@ -49,8 +49,9 @@ export class RecentlyViewedRepository extends BaseRepository<RecentlyViewedDocum
         const existing = await this.findByUserAndViewable(userId, viewableType, viewableId);
 
         if (existing) {
-            // Update updatedAt timestamp
-            existing.updatedAt = new Date();
+            // Update updatedAt timestamp by touching the document
+            // Mongoose timestamps will automatically update updatedAt when we save
+            (existing as any).updatedAt = new Date();
             return existing.save();
         }
 
@@ -83,22 +84,42 @@ export class RecentlyViewedRepository extends BaseRepository<RecentlyViewedDocum
             };
         }
 
-        return this.paginate(
+        // Use model directly for nested populate since base repository doesn't support it
+        const skip = (page - 1) * limit;
+        const conditions = { userId: new Types.ObjectId(userId) };
+
+        const query = this.recentlyViewedModel
+            .find(conditions)
+            .sort({ updatedAt: -1 })
+            .skip(skip)
+            .limit(limit)
+            .populate({
+                path: 'viewable',
+                // For Product, populate with files
+                populate: {
+                    path: 'files',
+                    select: 'name originalName path mimeType size type category subType description createdAt updatedAt',
+                },
+            });
+
+        const [data, total] = await Promise.all([
+            query.exec(),
+            this.recentlyViewedModel.countDocuments(conditions).exec(),
+        ]);
+
+        const totalPages = Math.ceil(total / limit);
+        const hasNext = page < totalPages;
+        const hasPrev = page > 1;
+
+        return {
+            data,
+            total,
             page,
             limit,
-            { userId: new Types.ObjectId(userId) },
-            {
-                sort: { updatedAt: -1 },
-                populate: [{
-                    path: 'viewable',
-                    // For Product, populate with files
-                    populate: [{
-                        path: 'files',
-                        select: 'name originalName path mimeType size type category subType description createdAt updatedAt',
-                    }],
-                }],
-            }
-        );
+            totalPages,
+            hasNext,
+            hasPrev,
+        };
     }
 
     /**
