@@ -123,5 +123,64 @@ export class UsersRepository extends BaseRepository<UserDocument> {
             populate: [{ path: 'profileImage', select: 'id path name mimeType size type category subType createdAt' }],
         });
     }
+
+    /**
+     * Find active approved vendors (paginated) - for user-side APIs
+     * Filters: role = VENDOR, status = ACTIVE, accountStatus = APPROVED
+     */
+    async findActiveApprovedVendorsWithPagination(page: number, limit: number, search?: string) {
+        const conditions: any = {
+            role: UserRole.VENDOR,
+            status: UserStatus.ACTIVE,
+            accountStatus: AccountStatus.APPROVED,
+            deletedAt: null,
+        };
+
+        // Add search filter if provided
+        if (search) {
+            conditions.$or = [
+                { email: { $regex: search, $options: 'i' } },
+                { firstName: { $regex: search, $options: 'i' } },
+                { lastName: { $regex: search, $options: 'i' } },
+            ];
+        }
+
+        return this.paginate(page, limit, conditions, {
+            sort: { createdAt: -1 },
+            populate: [
+                { path: 'profileImage', select: 'id path name mimeType size url' },
+                { path: 'categoryId', select: 'id title' },
+            ],
+        });
+    }
+
+    /**
+     * Find active approved vendor by ID - for user-side APIs
+     * Validates: role = VENDOR, status = ACTIVE, accountStatus = APPROVED
+     */
+    async findActiveApprovedVendorById(id: string): Promise<UserDocument | null> {
+        const user = await this.findById(id, {
+            populate: [
+                { path: 'profileImage', select: 'id path name mimeType size url type category subType createdAt' },
+                { path: 'categoryId', select: 'id title' },
+            ],
+        });
+
+        if (!user) {
+            return null;
+        }
+
+        // Validate vendor conditions
+        if (
+            user.role !== UserRole.VENDOR ||
+            user.status !== UserStatus.ACTIVE ||
+            user.accountStatus !== AccountStatus.APPROVED ||
+            user.deletedAt
+        ) {
+            return null;
+        }
+
+        return user;
+    }
 }
 

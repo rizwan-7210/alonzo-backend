@@ -8,6 +8,7 @@ import {
 import { UsersRepository } from '../repositories/users.repository';
 import { FileRepository } from '../../../shared/repositories/file.repository';
 import { ListUsersDto } from '../dto/list-users.dto';
+import { ListVendorsDto } from '../dto/list-vendors.dto';
 import { VendorActionDto } from '../dto/vendor-action.dto';
 import { UserRole, AccountStatus, UserStatus } from '../../../common/constants/user.constants';
 import { FileSubType } from '../../../common/constants/file.constants';
@@ -399,6 +400,144 @@ export class UsersService {
                 throw error;
             }
             throw new InternalServerErrorException('Failed to toggle user status');
+        }
+    }
+
+    /**
+     * List active approved vendors (for user-side APIs)
+     * Filters: role = VENDOR, status = ACTIVE, accountStatus = APPROVED
+     */
+    async listActiveVendors(queryDto: ListVendorsDto) {
+        try {
+            const page = queryDto.page;
+            const limit = queryDto.limit;
+
+            const result = await this.usersRepository.findActiveApprovedVendorsWithPagination(page, limit, queryDto.search);
+
+            // Format vendors with profileImage and categoryId
+            const formattedVendors = result.data.map((vendor: any) => {
+                const vendorObj = vendor.toObject ? vendor.toObject() : vendor;
+                const formattedVendor: any = { ...vendorObj };
+
+                // Format profileImage as object with path_link
+                if (vendorObj.profileImage) {
+                    formattedVendor.profileImage = this.formatFileObject(vendorObj.profileImage);
+                } else {
+                    formattedVendor.profileImage = null;
+                }
+
+                // Format categoryId as object with _id and title
+                if (vendorObj.categoryId) {
+                    formattedVendor.categoryId = {
+                        _id: vendorObj.categoryId._id?.toString() || vendorObj.categoryId.id,
+                        title: vendorObj.categoryId.title,
+                    };
+                }
+
+                return formattedVendor;
+            });
+
+            return {
+                message: 'Vendors retrieved successfully',
+                data: {
+                    vendors: formattedVendors,
+                    pagination: {
+                        total: result.total,
+                        page: result.page,
+                        limit: result.limit,
+                        totalPages: result.totalPages,
+                        hasNext: result.hasNext,
+                        hasPrev: result.hasPrev,
+                    },
+                },
+            };
+        } catch (error) {
+            this.logger.error('Error retrieving active vendors:', error);
+            throw new InternalServerErrorException('Failed to retrieve vendors');
+        }
+    }
+
+    /**
+     * Get active approved vendor details by ID (for user-side APIs)
+     * Validates: role = VENDOR, status = ACTIVE, accountStatus = APPROVED
+     */
+    async getVendorDetails(id: string) {
+        try {
+            const vendor = await this.usersRepository.findActiveApprovedVendorById(id);
+
+            if (!vendor) {
+                throw new NotFoundException('Vendor not found or not available');
+            }
+
+            // Format response
+            const vendorObj = vendor.toObject ? vendor.toObject() : vendor;
+            const response: any = {
+                ...vendorObj,
+            };
+
+            // Format profileImage as object with path_link
+            if (vendorObj.profileImage) {
+                response.profileImage = this.formatFileObject(vendorObj.profileImage);
+            } else {
+                response.profileImage = null;
+            }
+
+            // Format categoryId as object with _id and title
+            if (vendorObj.categoryId) {
+                response.categoryId = {
+                    _id: vendorObj.categoryId._id?.toString() || vendorObj.categoryId.id,
+                    title: vendorObj.categoryId.title,
+                };
+            }
+
+            // Get pharmacyLicense and registrationCertificate
+            let pharmacyLicense: any = null;
+            let registrationCertificate: any = null;
+
+            const userId = (vendor as any)._id?.toString() || (vendor as any).id;
+            if (userId) {
+                const userFiles = await this.fileRepository.findByEntity(userId, 'User');
+
+                const licenseFile = userFiles.find(
+                    (file) => {
+                        const fileObj = file.toObject ? file.toObject() : file;
+                        const fileSubType = fileObj.subType;
+                        const isActive = fileObj.isActive !== false;
+                        return fileSubType === FileSubType.PHARMACY_LICENSE && isActive;
+                    }
+                );
+
+                const certificateFile = userFiles.find(
+                    (file) => {
+                        const fileObj = file.toObject ? file.toObject() : file;
+                        const fileSubType = fileObj.subType;
+                        const isActive = fileObj.isActive !== false;
+                        return fileSubType === FileSubType.REGISTRATION_CERTIFICATE && isActive;
+                    }
+                );
+
+                if (licenseFile) {
+                    pharmacyLicense = this.formatFileObject(licenseFile);
+                }
+
+                if (certificateFile) {
+                    registrationCertificate = this.formatFileObject(certificateFile);
+                }
+            }
+
+            response.pharmacyLicense = pharmacyLicense;
+            response.registrationCertificate = registrationCertificate;
+
+            return {
+                message: 'Vendor details retrieved successfully',
+                data: response,
+            };
+        } catch (error) {
+            this.logger.error(`Error retrieving vendor details ${id}:`, error);
+            if (error instanceof NotFoundException) {
+                throw error;
+            }
+            throw new InternalServerErrorException('Failed to retrieve vendor details');
         }
     }
 }
