@@ -82,7 +82,10 @@ export class UserProfileController {
                 fileIsRequired: false,
                 validators: [
                     new MaxFileSizeValidator({ maxSize: 5 * 1024 * 1024 }), // 5MB
-                    new FileTypeValidator({ fileType: /(jpg|jpeg|png)$/ }),
+                    new FileTypeValidator({ 
+                        fileType: /^image\/(jpeg|jpg|png)$/,
+                        skipMagicNumbersValidation: true,
+                    }),
                 ],
             }),
         )
