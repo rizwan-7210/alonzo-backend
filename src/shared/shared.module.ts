@@ -28,6 +28,8 @@ import { PushNotification, PushNotificationSchema } from './schemas/push-notific
 import { PushNotificationRepository } from './repositories/push-notification.repository';
 import { ProfileUpdateRequest, ProfileUpdateRequestSchema } from './schemas/profile-update-request.schema';
 import { ProfileUpdateRequestRepository } from './repositories/profile-update-request.repository';
+import { RecentlyViewed, RecentlyViewedSchema } from './schemas/recently-viewed.schema';
+import { RecentlyViewedRepository } from './repositories/recently-viewed.repository';
 import { FormatterService } from './services/formatter.service';
 
 @Module({
@@ -47,9 +49,10 @@ import { FormatterService } from './services/formatter.service';
             { name: Product.name, schema: ProductSchema },
             { name: PushNotification.name, schema: PushNotificationSchema },
             { name: ProfileUpdateRequest.name, schema: ProfileUpdateRequestSchema },
+            { name: RecentlyViewed.name, schema: RecentlyViewedSchema },
         ]),
     ],
-    providers: [UserRepository, FileRepository, NotificationRepository, ContactRepository, PasswordResetRepository, PlanRepository, UserSubscriptionRepository, PaymentLogRepository, ReviewRepository, InvoiceRepository, CategoryRepository, ProductRepository, PushNotificationRepository, ProfileUpdateRequestRepository, FormatterService],
-    exports: [MongooseModule, UserRepository, FileRepository, NotificationRepository, ContactRepository, PasswordResetRepository, PlanRepository, UserSubscriptionRepository, PaymentLogRepository, ReviewRepository, InvoiceRepository, CategoryRepository, ProductRepository, PushNotificationRepository, ProfileUpdateRequestRepository, FormatterService],
+    providers: [UserRepository, FileRepository, NotificationRepository, ContactRepository, PasswordResetRepository, PlanRepository, UserSubscriptionRepository, PaymentLogRepository, ReviewRepository, InvoiceRepository, CategoryRepository, ProductRepository, PushNotificationRepository, ProfileUpdateRequestRepository, RecentlyViewedRepository, FormatterService],
+    exports: [MongooseModule, UserRepository, FileRepository, NotificationRepository, ContactRepository, PasswordResetRepository, PlanRepository, UserSubscriptionRepository, PaymentLogRepository, ReviewRepository, InvoiceRepository, CategoryRepository, ProductRepository, PushNotificationRepository, ProfileUpdateRequestRepository, RecentlyViewedRepository, FormatterService],
 })
 export class SharedModule { }
