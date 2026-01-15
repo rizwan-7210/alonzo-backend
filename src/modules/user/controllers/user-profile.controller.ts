@@ -1,5 +1,6 @@
 import {
     Controller,
+    Get,
     Put,
     UseGuards,
     UseInterceptors,
@@ -39,6 +40,55 @@ export class UserProfileController {
     constructor(
         private readonly userProfileService: UserProfileService,
     ) { }
+
+    @Get()
+    @HttpCode(HttpStatus.OK)
+    @ApiOperation({ summary: 'Get user profile' })
+    @ApiResponse({
+        status: 200,
+        description: 'Profile retrieved successfully',
+        schema: {
+            type: 'object',
+            properties: {
+                success: { type: 'boolean', example: true },
+                message: { type: 'string', example: 'Profile retrieved successfully' },
+                data: {
+                    type: 'object',
+                    properties: {
+                        id: { type: 'string' },
+                        email: { type: 'string' },
+                        firstName: { type: 'string' },
+                        lastName: { type: 'string' },
+                        phone: { type: 'string' },
+                        dial_code: { type: 'string', nullable: true },
+                        profileImage: {
+                            type: 'object',
+                            nullable: true,
+                            properties: {
+                                id: { type: 'string' },
+                                name: { type: 'string' },
+                                path: { type: 'string' },
+                                path_link: { type: 'string' },
+                                mimeType: { type: 'string' },
+                                size: { type: 'number' },
+                            },
+                        },
+                        status: { type: 'string' },
+                        role: { type: 'string' },
+                        createdAt: { type: 'string', format: 'date-time' },
+                        updatedAt: { type: 'string', format: 'date-time' },
+                    },
+                },
+                timestamp: { type: 'string', format: 'date-time' },
+            },
+        },
+    })
+    @ApiResponse({ status: 401, description: 'Unauthorized' })
+    @ApiResponse({ status: 404, description: 'User not found' })
+    @ApiResponse({ status: 500, description: 'Internal server error' })
+    async getProfile(@CurrentUser() user: any) {
+        return this.userProfileService.getProfile(user.id);
+    }
 
     @Put()
     @HttpCode(HttpStatus.OK)

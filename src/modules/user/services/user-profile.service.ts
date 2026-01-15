@@ -26,6 +26,55 @@ export class UserProfileService {
         private readonly fileRepository: FileRepository,
     ) { }
 
+    async getProfile(userId: string) {
+        try {
+            // Fetch user by ID with profile image
+            const user = await this.userRepository.findByIdWithProfileImage(userId);
+            if (!user) {
+                throw new NotFoundException('User not found');
+            }
+
+            // Validate user is active
+            if (user.status !== UserStatus.ACTIVE) {
+                throw new BadRequestException('Your account is not active. Please contact support.');
+            }
+
+            // Validate user role is USER
+            if (user.role !== UserRole.USER) {
+                throw new BadRequestException('Unauthorized');
+            }
+
+            // Get profile image file
+            let profileImageFile: any = null;
+
+            // Try to get from populated field
+            const profileImageObj = (user as any).profileImageFile;
+            if (profileImageObj) {
+                profileImageFile = profileImageObj.toObject ? profileImageObj.toObject() : profileImageObj;
+            } else {
+                // Fallback: fetch from file repository
+                profileImageFile = await this.fileRepository.findProfileImageByUserId(userId);
+            }
+
+            // Build response using sanitizeUserUtils
+            const sanitizedUser = sanitizeUserUtils.sanitizeUser(user, profileImageFile);
+
+            return {
+                message: 'Profile retrieved successfully',
+                data: sanitizedUser,
+            };
+        } catch (error) {
+            this.logger.error(`Error getting user profile ${userId}:`, error);
+            if (
+                error instanceof NotFoundException ||
+                error instanceof BadRequestException
+            ) {
+                throw error;
+            }
+            throw new InternalServerErrorException('Failed to get user profile');
+        }
+    }
+
     async updateProfile(
         userId: string,
         updateProfileDto: UpdateUserProfileDto,
