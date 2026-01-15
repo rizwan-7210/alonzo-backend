@@ -1,16 +1,8 @@
-import { IsOptional, IsNumber, Min, IsString, IsMongoId } from 'class-validator';
+import { IsOptional, IsNumber, Min, IsString } from 'class-validator';
 import { ApiPropertyOptional } from '@nestjs/swagger';
 import { Type, Transform } from 'class-transformer';
 
 export class SimilarProductsQueryDto {
-    @ApiPropertyOptional({ 
-        description: 'Filter products by category ID',
-        example: '507f1f77bcf86cd799439011'
-    })
-    @IsOptional()
-    @IsMongoId({ message: 'Category ID must be a valid MongoDB ObjectId' })
-    categoryId?: string;
-
     @ApiPropertyOptional({ 
         description: 'Number of similar products to return',
         example: 10,

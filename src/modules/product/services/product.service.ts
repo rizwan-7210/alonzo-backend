@@ -423,11 +423,10 @@ export class ProductService {
     async getSimilarProducts(
         productId: string,
         limit: number = 10,
-        categoryId?: string,
         sortBy?: string,
         search?: string,
     ) {
-        // Fetch the product to get its details for similarity matching
+        // Fetch the product to get its userId for similarity matching
         const product = await this.productRepository.findByIdWithFiles(productId);
         if (!product) {
             throw new NotFoundException('Product not found');
@@ -440,46 +439,8 @@ export class ProductService {
         const productObj = product.toObject ? product.toObject() : product;
         const productUserId = productObj.userId ? (typeof productObj.userId === 'object' ? productObj.userId.toString() : productObj.userId) : null;
 
-        // Build conditions for similar products
-        // Similarity: Products from same vendor (userId) OR vendors with same categoryId
-        const conditions: any = {
-            status: ProductStatus.ACTIVE,
-            _id: { $ne: new Types.ObjectId(productId) }, // Exclude current product
-        };
-
-        // Build similarity conditions: same userId OR same categoryId (from vendor)
-        const similarityConditions: any[] = [];
-        
-        if (productUserId) {
-            // Condition 1: Products from the same vendor (userId)
-            similarityConditions.push({ userId: new Types.ObjectId(productUserId) });
-
-            // Condition 2: Products from vendors with the same categoryId
-            // Get the vendor's categoryId
-            const vendor = await this.userRepository.findById(productUserId);
-            if (vendor?.categoryId) {
-                const vendorCategoryId = vendor.categoryId instanceof Types.ObjectId 
-                    ? vendor.categoryId 
-                    : new Types.ObjectId(vendor.categoryId);
-                
-                // Find other vendors with the same categoryId
-                const vendorsWithSameCategory = await this.userRepository['userModel'].find({
-                    categoryId: vendorCategoryId,
-                    _id: { $ne: new Types.ObjectId(productUserId) },
-                }).select('_id').lean();
-                
-                if (vendorsWithSameCategory && vendorsWithSameCategory.length > 0) {
-                    const vendorIds = vendorsWithSameCategory.map((v: any) => v._id);
-                    similarityConditions.push({ userId: { $in: vendorIds } });
-                }
-            }
-        }
-
-        // Build final conditions
-        if (similarityConditions.length > 0) {
-            conditions.$or = similarityConditions;
-        } else {
-            // If no similarity conditions, return empty results
+        if (!productUserId) {
+            // If product has no userId, return empty results
             return {
                 data: [],
                 meta: {
@@ -489,28 +450,13 @@ export class ProductService {
             };
         }
 
-        // Apply optional categoryId filter (if provided, further filter by vendor categoryId)
-        if (categoryId) {
-            // Find vendors with the specified categoryId
-            const vendorsWithCategory = await this.userRepository['userModel'].find({
-                categoryId: new Types.ObjectId(categoryId),
-            }).select('_id').lean();
-            
-            if (vendorsWithCategory && vendorsWithCategory.length > 0) {
-                const vendorIds = vendorsWithCategory.map((v: any) => v._id);
-                // Override similarity conditions to only include products from vendors with this categoryId
-                conditions.$or = [{ userId: { $in: vendorIds } }];
-            } else {
-                // No vendors with this categoryId, return empty results
-                return {
-                    data: [],
-                    meta: {
-                        total: 0,
-                        limit,
-                    },
-                };
-            }
-        }
+        // Build conditions for similar products
+        // Similarity: Products from the same vendor (userId)
+        const conditions: any = {
+            status: ProductStatus.ACTIVE,
+            _id: { $ne: new Types.ObjectId(productId) }, // Exclude current product
+            userId: new Types.ObjectId(productUserId), // Only products from the same vendor
+        };
 
         // Apply optional search filter
         if (search) {
@@ -519,16 +465,19 @@ export class ProductService {
                 { description: { $regex: search, $options: 'i' } },
             ];
             
-            if (conditions.$or) {
-                // Combine with existing $or conditions using $and
-                conditions.$and = [
-                    { $or: conditions.$or },
-                    { $or: searchConditions },
-                ];
-                delete conditions.$or;
-            } else {
-                conditions.$or = searchConditions;
-            }
+            // Combine base conditions with search using $and
+            conditions.$and = [
+                {
+                    status: ProductStatus.ACTIVE,
+                    _id: { $ne: new Types.ObjectId(productId) },
+                    userId: new Types.ObjectId(productUserId),
+                },
+                { $or: searchConditions },
+            ];
+            // Remove individual fields since they're now in $and
+            delete conditions.status;
+            delete conditions._id;
+            delete conditions.userId;
         }
 
         // Build sort object

@@ -1,4 +1,4 @@
-import { Module } from '@nestjs/common';
+import { Module, forwardRef } from '@nestjs/common';
 import { MongooseModule } from '@nestjs/mongoose';
 import { UsersService } from './services/users.service';
 import { UserProfileService } from './services/user-profile.service';
@@ -19,7 +19,7 @@ import { User, UserSchema } from '../../shared/schemas/user.schema';
     imports: [
         SharedModule,
         NotificationModule,
-        ProductModule,
+        forwardRef(() => ProductModule),
         MongooseModule.forFeature([{ name: User.name, schema: UserSchema }]),
     ],
     controllers: [
