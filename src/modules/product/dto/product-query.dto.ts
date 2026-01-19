@@ -57,5 +57,15 @@ export class ProductQueryDto {
     @IsDateString()
     @IsOptional()
     toDate?: string;
+
+    @ApiProperty({ required: false, description: 'Filter products by user ID (vendor ID)' })
+    @Transform(({ value }) => {
+        // Convert empty string to undefined
+        if (value === '' || value === null || value === undefined) return undefined;
+        return value;
+    })
+    @IsString()
+    @IsOptional()
+    userId?: string;
 }
 

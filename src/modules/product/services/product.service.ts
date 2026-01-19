@@ -378,8 +378,13 @@ export class ProductService {
     }
 
     // Public methods for users (read-only)
-    async getActiveProducts(page: number = 1, limit: number = 10, search?: string) {
+    async getActiveProducts(page: number = 1, limit: number = 10, search?: string, userId?: string) {
         const conditions: any = { status: ProductStatus.ACTIVE };
+
+        // Filter by userId if provided
+        if (userId) {
+            conditions.userId = new Types.ObjectId(userId);
+        }
 
         // Search by title
         if (search) {

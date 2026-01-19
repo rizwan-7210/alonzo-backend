@@ -60,13 +60,14 @@ export class UserProductController {
     @ApiQuery({ name: 'page', required: false, type: Number, example: 1 })
     @ApiQuery({ name: 'limit', required: false, type: Number, example: 10 })
     @ApiQuery({ name: 'search', required: false, type: String, description: 'Search by product title' })
+    @ApiQuery({ name: 'userId', required: false, type: String, description: 'Filter products by user ID (vendor ID)' })
     @ApiResponse({ status: 200, description: 'Products retrieved successfully' })
     async getProducts(@Query() queryDto: ProductQueryDto) {
         const page = queryDto.page || 1;
         const limit = queryDto.limit || 10;
         return {
             message: 'Products retrieved successfully',
-            data: await this.productService.getActiveProducts(Number(page), Number(limit), queryDto.search),
+            data: await this.productService.getActiveProducts(Number(page), Number(limit), queryDto.search, queryDto.userId),
         };
     }
 
