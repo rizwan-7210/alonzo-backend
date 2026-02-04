@@ -9,16 +9,19 @@ import { UsersVendorsController } from './controllers/users-vendors.controller';
 import { UserProfileController } from './controllers/user-profile.controller';
 import { UserNotificationController } from './controllers/user-notification.controller';
 import { UserRecentlyViewedController } from './controllers/user-recently-viewed.controller';
+import { UserCategoryController } from './controllers/user-category.controller';
 import { UsersRepository } from './repositories/users.repository';
 import { SharedModule } from '../../shared/shared.module';
 import { NotificationModule } from '../notification/notification.module';
 import { ProductModule } from '../product/product.module';
+import { CategoryModule } from '../category/category.module';
 import { User, UserSchema } from '../../shared/schemas/user.schema';
 
 @Module({
     imports: [
         SharedModule,
         NotificationModule,
+        CategoryModule,
         forwardRef(() => ProductModule),
         MongooseModule.forFeature([{ name: User.name, schema: UserSchema }]),
     ],
@@ -28,6 +31,7 @@ import { User, UserSchema } from '../../shared/schemas/user.schema';
         UserProfileController,
         UserNotificationController,
         UserRecentlyViewedController,
+        UserCategoryController,
     ],
     providers: [
         UsersService,
