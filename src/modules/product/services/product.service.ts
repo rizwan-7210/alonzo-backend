@@ -330,9 +330,10 @@ export class ProductService {
         search?: string,
         fromDate?: string,
         toDate?: string,
+        sortByName?: 'ASC' | 'DESC',
     ) {
         const conditions: any = { userId: new Types.ObjectId(userId) };
-        
+
         if (status) {
             conditions.status = status;
         }
@@ -356,8 +357,11 @@ export class ProductService {
             }
         }
 
+        const sort = sortByName
+            ? { title: sortByName === 'ASC' ? 1 : -1 }
+            : { createdAt: -1 };
         const result = await this.productRepository.paginate(page, limit, conditions, {
-            sort: { createdAt: -1 },
+            sort,
             populate: [{
                 path: 'files',
                 select: 'name originalName path mimeType size type category subType description createdAt updatedAt',
@@ -378,7 +382,7 @@ export class ProductService {
     }
 
     // Public methods for users (read-only)
-    async getActiveProducts(page: number = 1, limit: number = 10, search?: string, userId?: string) {
+    async getActiveProducts(page: number = 1, limit: number = 10, search?: string, userId?: string, sortByName?: 'ASC' | 'DESC') {
         const conditions: any = { status: ProductStatus.ACTIVE };
 
         // Filter by userId if provided
@@ -391,8 +395,11 @@ export class ProductService {
             conditions.title = { $regex: search, $options: 'i' };
         }
 
+        const sort = sortByName
+            ? { title: sortByName === 'ASC' ? 1 : -1 }
+            : { createdAt: -1 };
         const result = await this.productRepository.paginate(page, limit, conditions, {
-            sort: { createdAt: -1 },
+            sort,
             populate: [{
                 path: 'files',
                 select: 'name originalName path mimeType size type category subType description createdAt updatedAt',
@@ -469,7 +476,7 @@ export class ProductService {
                 { title: { $regex: search, $options: 'i' } },
                 { description: { $regex: search, $options: 'i' } },
             ];
-            
+
             // Combine base conditions with search using $and
             conditions.$and = [
                 {
@@ -490,7 +497,7 @@ export class ProductService {
         if (sortBy) {
             const [field, order] = sortBy.split(':');
             const sortOrder = order?.toUpperCase() === 'ASC' ? 1 : -1;
-            
+
             switch (field?.toLowerCase()) {
                 case 'price':
                 case 'amount':

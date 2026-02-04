@@ -7,7 +7,7 @@ import { UpdateProductDto } from '../dto/update-product.dto';
 import { ToggleProductStatusDto } from '../dto/toggle-product-status.dto';
 import { ToggleStatusDto } from '../dto/toggle-status.dto';
 import { ToggleInventoryStatusDto } from '../dto/toggle-inventory-status.dto';
-import { ProductQueryDto } from '../dto/product-query.dto';
+import { ProductQueryDto, SortByName } from '../dto/product-query.dto';
 import { CurrentUser } from 'src/common/decorators/current-user.decorator';
 import { Roles } from 'src/common/decorators/roles.decorator';
 import { UserRole } from 'src/common/constants/user.constants';
@@ -76,6 +76,7 @@ export class VendorProductController {
     @ApiQuery({ name: 'search', required: false, type: String, description: 'Search by product title' })
     @ApiQuery({ name: 'fromDate', required: false, type: String, description: 'Filter products from this date (ISO 8601 format)', example: '2024-01-01' })
     @ApiQuery({ name: 'toDate', required: false, type: String, description: 'Filter products until this date (ISO 8601 format)', example: '2024-12-31' })
+    @ApiQuery({ name: 'sortByName', required: false, enum: SortByName, description: 'Sort products by title (ASC or DESC)' })
     @ApiResponse({ status: 200, description: 'Products retrieved successfully' })
     async getProducts(
         @Query() queryDto: ProductQueryDto,
@@ -91,6 +92,7 @@ export class VendorProductController {
             queryDto.search,
             queryDto.fromDate,
             queryDto.toDate,
+            queryDto.sortByName,
         );
     }
 

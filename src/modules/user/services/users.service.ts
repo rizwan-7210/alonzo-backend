@@ -96,7 +96,7 @@ export class UsersService {
             const formattedVendors = result.data.map((vendor: any) => {
                 const vendorObj = vendor.toObject ? vendor.toObject() : vendor;
                 const formattedVendor: any = { ...vendorObj };
-                
+
                 // Format categoryId as object with _id and title
                 if (vendorObj.categoryId) {
                     formattedVendor.categoryId = {
@@ -104,7 +104,7 @@ export class UsersService {
                         title: vendorObj.categoryId.title,
                     };
                 }
-                
+
                 return formattedVendor;
             });
 
@@ -133,10 +133,10 @@ export class UsersService {
      */
     private buildFileUrl(path: string): string {
         if (!path) return '';
-        
+
         const baseUrl = process.env.APP_URL || 'http://localhost:3000';
         const cleanBaseUrl = baseUrl.replace(/\/$/, '');
-        
+
         // If path already includes /uploads/
         if (path.startsWith('/uploads/')) {
             return `${cleanBaseUrl}${path}`;
@@ -155,11 +155,11 @@ export class UsersService {
      */
     private formatFileObject(file: any): any {
         if (!file) return null;
-        
+
         const fileObj = file.toObject ? file.toObject() : file;
         const fileId = (fileObj as any)._id?.toString() || (fileObj as any).id;
         const filePath = fileObj.path || '';
-        
+
         return {
             id: fileId,
             path: filePath,
@@ -241,7 +241,7 @@ export class UsersService {
 
             response.pharmacyLicense = pharmacyLicense;
             response.registrationCertificate = registrationCertificate;
-            
+
             // Format categoryId as object with _id and title
             if (userObj.categoryId) {
                 response.categoryId = {
@@ -460,6 +460,44 @@ export class UsersService {
             };
         } catch (error) {
             this.logger.error('Error retrieving active vendors:', error);
+            throw new InternalServerErrorException('Failed to retrieve vendors');
+        }
+    }
+
+    /**
+     * List all active approved vendors sorted by first name ascending (no pagination)
+     * For admin and user
+     */
+    async listAllActiveVendorsByFirstName() {
+        try {
+            const vendors = await this.usersRepository.findAllActiveApprovedVendorsSortedByFirstName();
+
+            const formattedVendors = vendors.map((vendor: any) => {
+                const vendorObj = vendor.toObject ? vendor.toObject() : vendor;
+                const formattedVendor: any = { ...vendorObj };
+
+                if (vendorObj.profileImage) {
+                    formattedVendor.profileImage = this.formatFileObject(vendorObj.profileImage);
+                } else {
+                    formattedVendor.profileImage = null;
+                }
+
+                if (vendorObj.categoryId) {
+                    formattedVendor.categoryId = {
+                        _id: vendorObj.categoryId._id?.toString() || vendorObj.categoryId.id,
+                        title: vendorObj.categoryId.title,
+                    };
+                }
+
+                return formattedVendor;
+            });
+
+            return {
+                message: 'Vendors retrieved successfully',
+                data: { vendors: formattedVendors },
+            };
+        } catch (error) {
+            this.logger.error('Error retrieving all active vendors:', error);
             throw new InternalServerErrorException('Failed to retrieve vendors');
         }
     }

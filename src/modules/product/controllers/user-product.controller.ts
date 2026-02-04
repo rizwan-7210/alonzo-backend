@@ -1,7 +1,7 @@
 import { Controller, Get, Param, Query, Logger, Req } from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiResponse, ApiQuery, ApiParam, ApiBearerAuth } from '@nestjs/swagger';
 import { ProductService } from '../services/product.service';
-import { ProductQueryDto } from '../dto/product-query.dto';
+import { ProductQueryDto, SortByName } from '../dto/product-query.dto';
 import { SimilarProductsQueryDto } from '../dto/similar-products-query.dto';
 import { Public } from 'src/common/decorators/public.decorator';
 import { CurrentUser } from 'src/common/decorators/current-user.decorator';
@@ -33,10 +33,10 @@ export class UserProductController {
             }
 
             const token = authHeader.replace('Bearer ', '');
-            
+
             // Verify and decode the token (throws if invalid or expired)
             const payload = this.jwtService.verify(token) as any;
-            
+
             if (!payload) {
                 return null;
             }
@@ -61,13 +61,14 @@ export class UserProductController {
     @ApiQuery({ name: 'limit', required: false, type: Number, example: 10 })
     @ApiQuery({ name: 'search', required: false, type: String, description: 'Search by product title' })
     @ApiQuery({ name: 'userId', required: false, type: String, description: 'Filter products by user ID (vendor ID)' })
+    @ApiQuery({ name: 'sortByName', required: false, enum: SortByName, description: 'Sort products by title (ASC or DESC)' })
     @ApiResponse({ status: 200, description: 'Products retrieved successfully' })
     async getProducts(@Query() queryDto: ProductQueryDto) {
         const page = queryDto.page || 1;
         const limit = queryDto.limit || 10;
         return {
             message: 'Products retrieved successfully',
-            data: await this.productService.getActiveProducts(Number(page), Number(limit), queryDto.search, queryDto.userId),
+            data: await this.productService.getActiveProducts(Number(page), Number(limit), queryDto.search, queryDto.userId, queryDto.sortByName),
         };
     }
 
@@ -77,8 +78,8 @@ export class UserProductController {
     @ApiQuery({ name: 'limit', required: false, type: Number, description: 'Number of similar products to return', example: 10 })
     @ApiQuery({ name: 'sortBy', required: false, type: String, description: 'Sort products (e.g., price:ASC, price:DESC, name:ASC, name:DESC)', example: 'price:ASC' })
     @ApiQuery({ name: 'search', required: false, type: String, description: 'Search products by title or description' })
-    @ApiResponse({ 
-        status: 200, 
+    @ApiResponse({
+        status: 200,
         description: 'Similar products retrieved successfully',
         schema: {
             type: 'object',

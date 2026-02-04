@@ -65,6 +65,33 @@ export class UsersVendorsController {
         return this.usersService.listActiveVendors(queryDto);
     }
 
+    @Get('all')
+    @HttpCode(HttpStatus.OK)
+    @ApiOperation({ summary: 'Get all active vendors sorted by first name (A–Z), for admin and user' })
+    @ApiResponse({
+        status: 200,
+        description: 'All active vendors retrieved successfully',
+        schema: {
+            type: 'object',
+            properties: {
+                message: { type: 'string', example: 'Vendors retrieved successfully' },
+                data: {
+                    type: 'object',
+                    properties: {
+                        vendors: {
+                            type: 'array',
+                            items: { type: 'object' },
+                        },
+                    },
+                },
+            },
+        },
+    })
+    @ApiResponse({ status: 500, description: 'Internal server error' })
+    async listAllVendorsByFirstName() {
+        return this.usersService.listAllActiveVendorsByFirstName();
+    }
+
     @Get(':id')
     @HttpCode(HttpStatus.OK)
     @ApiOperation({ summary: 'Get vendor details by ID (user-side)' })

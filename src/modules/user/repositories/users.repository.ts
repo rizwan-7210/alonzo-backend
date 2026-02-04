@@ -320,6 +320,25 @@ export class UsersRepository extends BaseRepository<UserDocument> {
     }
 
     /**
+     * Find all active approved vendors sorted by firstName ascending (no pagination)
+     * For admin and user: list all vendors by first name A–Z
+     */
+    async findAllActiveApprovedVendorsSortedByFirstName(): Promise<UserDocument[]> {
+        const conditions = {
+            role: UserRole.VENDOR,
+            status: UserStatus.ACTIVE,
+            accountStatus: AccountStatus.APPROVED,
+            deletedAt: null,
+        };
+        return this.userModel
+            .find(conditions)
+            .sort({ firstName: 1 })
+            .populate({ path: 'profileImage', select: 'id path name mimeType size url' })
+            .populate({ path: 'categoryId', select: 'id title' })
+            .exec();
+    }
+
+    /**
      * Find active approved vendor by ID - for user-side APIs
      * Validates: role = VENDOR, status = ACTIVE, accountStatus = APPROVED
      */

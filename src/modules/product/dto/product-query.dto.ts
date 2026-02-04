@@ -3,6 +3,11 @@ import { ApiProperty } from '@nestjs/swagger';
 import { ProductStatus } from 'src/common/constants/product.constants';
 import { Type, Transform } from 'class-transformer';
 
+export enum SortByName {
+    ASC = 'ASC',
+    DESC = 'DESC',
+}
+
 export class ProductQueryDto {
     @ApiProperty({ required: false, type: Number, example: 1 })
     @IsOptional()
@@ -67,5 +72,14 @@ export class ProductQueryDto {
     @IsString()
     @IsOptional()
     userId?: string;
+
+    @ApiProperty({ required: false, enum: SortByName, description: 'Sort products by title (ASC or DESC)' })
+    @Transform(({ value }) => {
+        if (value === '' || value === null || value === undefined) return undefined;
+        return value;
+    })
+    @IsOptional()
+    @IsEnum(SortByName, { message: 'sortByName must be either ASC or DESC' })
+    sortByName?: SortByName;
 }
 
