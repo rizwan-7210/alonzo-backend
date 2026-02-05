@@ -45,6 +45,9 @@ export class Category {
         default: CategoryStatus.ACTIVE,
     })
     status: CategoryStatus;
+
+    @Prop({ type: Number, default: 0 })
+    sortBy: number;
 }
 
 export const CategorySchema = SchemaFactory.createForClass(Category);
@@ -65,4 +68,5 @@ CategorySchema.virtual('file', {
 CategorySchema.index({ title: 1 });
 CategorySchema.index({ status: 1 });
 CategorySchema.index({ createdAt: -1 });
+CategorySchema.index({ sortBy: 1 });
 

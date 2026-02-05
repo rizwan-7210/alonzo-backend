@@ -27,6 +27,7 @@
     "migration:update-plans-schema": "ts-node -r tsconfig-paths/register src/migrations/update-plans-schema.migration.ts",
     "migration:update-user-subscriptions-schema": "ts-node -r tsconfig-paths/register src/migrations/update-user-subscriptions-schema.migration.ts",
     "migration:update-categories-schema": "ts-node -r tsconfig-paths/register src/migrations/update-categories-schema.migration.ts",
+    "migration:backfill-categories-sortby": "ts-node -r tsconfig-paths/register src/migrations/backfill-categories-sortby.migration.ts",
     "seed:categories": "ts-node -r tsconfig-paths/register src/seeders/categories.seeder.ts",
     "seed:admin": "ts-node -r tsconfig-paths/register src/seeders/admin.seeder.ts"
   },

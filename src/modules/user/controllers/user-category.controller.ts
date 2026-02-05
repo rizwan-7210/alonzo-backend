@@ -1,5 +1,5 @@
-import { Controller, Get, Param } from '@nestjs/common';
-import { ApiTags, ApiOperation, ApiResponse, ApiParam } from '@nestjs/swagger';
+import { Controller, Get, Param, Query } from '@nestjs/common';
+import { ApiTags, ApiOperation, ApiResponse, ApiParam, ApiQuery } from '@nestjs/swagger';
 import { CategoryService } from '../../admin/services/category.service';
 import { Public } from 'src/common/decorators/public.decorator';
 
@@ -10,12 +10,13 @@ export class UserCategoryController {
     constructor(private readonly categoryService: CategoryService) { }
 
     @Get()
-    @ApiOperation({ summary: 'Get all active categories (sorted alphabetically by title)' })
+    @ApiOperation({ summary: 'Get all active categories (by title A–Z, or by sortBy when sortby=ASC/DESC)' })
+    @ApiQuery({ name: 'sortby', required: false, enum: ['ASC', 'DESC'], description: 'Sort by sortBy column (ASC/DESC). When provided, results are ordered only by sortBy.' })
     @ApiResponse({ status: 200, description: 'Categories retrieved successfully' })
-    async getCategories() {
+    async getCategories(@Query('sortby') sortby?: string) {
         return {
             message: 'Categories retrieved successfully',
-            data: await this.categoryService.getActiveCategories(),
+            data: await this.categoryService.getActiveCategories(sortby),
         };
     }
 

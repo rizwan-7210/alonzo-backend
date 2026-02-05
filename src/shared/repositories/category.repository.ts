@@ -33,6 +33,17 @@ export class CategoryRepository extends BaseRepository<CategoryDocument> {
             .exec();
     }
 
+    /** Get the greatest sortBy value (for assigning next on create) */
+    async getMaxSortBy(): Promise<number> {
+        const result = await this.categoryModel
+            .findOne()
+            .sort({ sortBy: -1 })
+            .select('sortBy')
+            .lean()
+            .exec();
+        return result?.sortBy ?? 0;
+    }
+
     async findByIdWithFile(id: string): Promise<CategoryDocument | null> {
         if (!this.isValidObjectId(id)) {
             return null;

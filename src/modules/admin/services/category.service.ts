@@ -24,11 +24,14 @@ export class CategoryService {
             throw new ConflictException('Category with this title already exists');
         }
 
+        const nextSortBy = (await this.categoryRepository.getMaxSortBy()) + 1;
+
         // Create category
         const category = await this.categoryRepository.create({
             title: title.trim(),
             description: description?.trim(),
             status: status || CategoryStatus.ACTIVE,
+            sortBy: nextSortBy,
         });
 
         // Handle file upload if provided
@@ -128,14 +131,19 @@ export class CategoryService {
         return this.formatCategoryResponse(category);
     }
 
-    async getAllCategories(page: number = 1, limit: number = 10, status?: CategoryStatus) {
+    async getAllCategories(page: number = 1, limit: number = 10, status?: CategoryStatus, sortby?: string) {
         const conditions: any = {};
         if (status) {
             conditions.status = status;
         }
 
+        const sortOrder = this.parseSortByParam(sortby);
+        const sort = sortOrder !== null
+            ? { sortBy: sortOrder }
+            : { createdAt: -1 };
+
         const result = await this.categoryRepository.paginate(page, limit, conditions, {
-            sort: { createdAt: -1 },
+            sort,
             populate: [{
                 path: 'file',
                 select: 'name originalName path mimeType size type category subType description createdAt updatedAt',
@@ -177,18 +185,26 @@ export class CategoryService {
     }
 
     // Public methods for vendor/user (read-only)
-    async getActiveCategories() {
+    async getActiveCategories(sortby?: string) {
+        const sortOrder = this.parseSortByParam(sortby);
+        const sort = sortOrder !== null
+            ? { sortBy: sortOrder }
+            : { createdAt: -1 };
+
         const categories = await this.categoryRepository.findAllWithFile(
             { status: CategoryStatus.ACTIVE },
-            { createdAt: -1 }
+            sort,
         );
-        // Sort by title ascending (alphabetical)
+
+        if (sortOrder !== null) {
+            return categories.map(category => this.formatCategoryResponse(category));
+        }
+        // Default: sort by title ascending (alphabetical)
         const sortedCategories = categories.sort((a, b) => {
             const titleA = a.title.toLowerCase();
             const titleB = b.title.toLowerCase();
             return titleA.localeCompare(titleB);
         });
-
         return sortedCategories.map(category => this.formatCategoryResponse(category));
     }
 
@@ -209,6 +225,17 @@ export class CategoryService {
         for (const file of existingFiles) {
             await this.fileRepository.softDelete(file._id.toString());
         }
+    }
+
+    /** Parse sortby query param: only 'ASC'|'DESC' (case-insensitive); empty/invalid => null */
+    private parseSortByParam(sortby?: string): 1 | -1 | null {
+        if (sortby === undefined || sortby === null || String(sortby).trim() === '') {
+            return null;
+        }
+        const v = String(sortby).trim().toUpperCase();
+        if (v === 'ASC') return 1;
+        if (v === 'DESC') return -1;
+        return null;
     }
 
     private formatCategoryResponse(category: any) {
@@ -258,6 +285,7 @@ export class CategoryService {
             title: categoryObj.title,
             description: categoryObj.description || null,
             status: categoryObj.status,
+            sortBy: categoryObj.sortBy ?? 0,
             file: fileObject,
             createdAt: categoryObj.createdAt ? new Date(categoryObj.createdAt).toISOString() : null,
             updatedAt: categoryObj.updatedAt ? new Date(categoryObj.updatedAt).toISOString() : null,
