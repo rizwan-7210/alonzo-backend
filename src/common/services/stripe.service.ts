@@ -41,4 +41,32 @@ export class StripeService {
         }
         return this.stripe;
     }
+
+    /**
+     * Create a PaymentIntent for one-time payment.
+     * @param amountInCents amount in smallest currency unit (e.g. cents for USD)
+     * @param currency e.g. 'usd'
+     * @param options optional customerId and metadata
+     * @returns Stripe PaymentIntent (include client_secret for client-side confirmation)
+     */
+    async createPaymentIntent(
+        amountInCents: number,
+        currency: string = 'usd',
+        options?: { customerId?: string; metadata?: Record<string, string> },
+    ): Promise<Stripe.PaymentIntent> {
+        const stripe = this.getStripe();
+        const params: Stripe.PaymentIntentCreateParams = {
+            amount: amountInCents,
+            currency,
+            automatic_payment_methods: { enabled: true },
+            ...(options?.metadata && { metadata: options.metadata }),
+            ...(options?.customerId && { customer: options.customerId }),
+        };
+        return stripe.paymentIntents.create(params);
+    }
+
+    async retrievePaymentIntent(paymentIntentId: string): Promise<Stripe.PaymentIntent> {
+        const stripe = this.getStripe();
+        return stripe.paymentIntents.retrieve(paymentIntentId);
+    }
 }

@@ -1,10 +1,16 @@
 import { Injectable, Logger, NotFoundException, BadRequestException, InternalServerErrorException } from '@nestjs/common';
+import { Types } from 'mongoose';
 import { PlanRepository } from '../../../shared/repositories/plan.repository';
+import { UserRepository } from '../../../shared/repositories/user.repository';
+import { UserSubscriptionRepository } from '../../../shared/repositories/user-subscription.repository';
+import { PaymentLogRepository } from '../../../shared/repositories/payment-log.repository';
 import { StripeService } from '../../../common/services/stripe.service';
 import { CreatePlanDto } from '../dto/create-plan.dto';
 import { UpdatePlanDto } from '../dto/update-plan.dto';
 import { ListPlansDto } from '../dto/list-plans.dto';
 import { PlanStatus, PlanDuration } from '../../../common/constants/plan.constants';
+import { UserSubscriptionStatus } from '../../../common/constants/subscription.constants';
+import { PaymentType, PaymentStatus } from '../../../common/constants/payment.constants';
 import Stripe from 'stripe';
 
 @Injectable()
@@ -13,6 +19,9 @@ export class PlansService {
 
     constructor(
         private readonly planRepository: PlanRepository,
+        private readonly userRepository: UserRepository,
+        private readonly userSubscriptionRepository: UserSubscriptionRepository,
+        private readonly paymentLogRepository: PaymentLogRepository,
         private readonly stripeService: StripeService,
     ) { }
 
@@ -261,6 +270,186 @@ export class PlansService {
             this.logger.error('Error retrieving active plans:', error);
             throw new InternalServerErrorException('Failed to retrieve active plans');
         }
+    }
+
+    /**
+     * Create a Stripe PaymentIntent for purchasing a plan (vendor).
+     * Returns the PaymentIntent so the client can confirm payment (e.g. with client_secret).
+     */
+    async createPurchasePaymentIntent(planId: string, userId: string): Promise<{
+        clientSecret: string;
+        paymentIntentId: string;
+        amount: number;
+        currency: string;
+        planId: string;
+    }> {
+        const plan = await this.planRepository.findById(planId);
+        if (!plan) {
+            throw new NotFoundException('Plan not found');
+        }
+        if (plan.status !== PlanStatus.ACTIVE) {
+            throw new BadRequestException('Plan is not active');
+        }
+
+        const activeSubscription = await this.userSubscriptionRepository.findActiveByUserId(userId);
+        if (activeSubscription) {
+            throw new BadRequestException('You have already an active subscription');
+        }
+
+        const user = await this.userRepository.findById(userId);
+        if (!user) {
+            throw new NotFoundException('User not found');
+        }
+
+        let customerId = user.stripeCustomerId;
+        if (!customerId) {
+            customerId = await this.stripeService.ensureCustomer({
+                email: user.email,
+                firstName: user.firstName,
+                lastName: user.lastName || '',
+                stripeCustomerId: user.stripeCustomerId,
+            });
+            await this.userRepository.update(userId, { stripeCustomerId: customerId });
+        }
+
+        const amountInCents = Math.round(plan.amount * 100);
+        if (amountInCents < 50) {
+            throw new BadRequestException('Plan amount is too low for payment');
+        }
+
+        const paymentIntent = await this.stripeService.createPaymentIntent(amountInCents, 'usd', {
+            customerId,
+            metadata: {
+                planId,
+                userId,
+            },
+        });
+
+        this.logger.log(`PaymentIntent created for plan ${planId} by user ${userId}: ${paymentIntent.id}`);
+
+        return {
+            clientSecret: paymentIntent.client_secret!,
+            paymentIntentId: paymentIntent.id,
+            amount: plan.amount,
+            currency: 'usd',
+            planId,
+        };
+    }
+
+    /**
+     * Record successful plan payment: create active subscription and payment log.
+     * Call this when the client confirms payment (e.g. after Stripe confirms).
+     * Idempotent: if this paymentIntentId was already recorded, returns existing subscription and log.
+     */
+    async recordPaymentSuccess(paymentIntentId: string, userId: string): Promise<{
+        subscription: any;
+        paymentLog: any;
+    }> {
+        const existingLog = await this.paymentLogRepository.findByPaymentIntentId(paymentIntentId);
+        if (existingLog) {
+            this.logger.log(`Payment intent ${paymentIntentId} already recorded`);
+            const logObj = existingLog.toObject ? existingLog.toObject() : existingLog;
+            const subRef = (logObj as any).subscriptionId;
+            const subId = subRef?._id ?? subRef;
+            const subscription = subId
+                ? await this.userSubscriptionRepository.findById(String(subId), { populate: [{ path: 'planId' }] })
+                : null;
+            return {
+                subscription: subscription ? this.formatSubscription(subscription) : null,
+                paymentLog: this.formatPaymentLog(existingLog),
+            };
+        }
+
+        const paymentIntent = await this.stripeService.retrievePaymentIntent(paymentIntentId);
+        if (paymentIntent.status !== 'succeeded') {
+            throw new BadRequestException(`Payment has not succeeded (status: ${paymentIntent.status})`);
+        }
+
+        const planId = paymentIntent.metadata?.planId;
+        const metadataUserId = paymentIntent.metadata?.userId;
+        if (!planId || !metadataUserId) {
+            throw new BadRequestException('Invalid payment intent metadata (planId/userId missing)');
+        }
+        if (metadataUserId !== userId) {
+            throw new BadRequestException('Payment intent does not belong to this user');
+        }
+
+        const plan = await this.planRepository.findById(planId);
+        if (!plan) {
+            throw new NotFoundException('Plan not found');
+        }
+
+        const expiryDate = this.computeExpiryDate(plan.duration);
+
+        const subscription = await this.userSubscriptionRepository.create({
+            planId: new Types.ObjectId(planId),
+            userId: new Types.ObjectId(userId),
+            amountPaid: plan.amount,
+            status: UserSubscriptionStatus.PAID,
+            duration: plan.duration,
+            expiryDate,
+        });
+
+        const amountDollars = (paymentIntent.amount ?? 0) / 100;
+        const paymentLog = await this.paymentLogRepository.create({
+            userId: new Types.ObjectId(userId) as any,
+            paymentType: PaymentType.SUBSCRIPTION,
+            planId: new Types.ObjectId(planId) as any,
+            subscriptionId: new Types.ObjectId(subscription._id.toString()) as any,
+            paymentIntentId: paymentIntent.id,
+            amount: amountDollars,
+            currency: paymentIntent.currency ?? 'usd',
+            status: PaymentStatus.SUCCEEDED,
+            metadata: { planId, userId },
+        });
+
+        this.logger.log(`Plan purchase recorded: subscription ${subscription._id}, paymentIntent ${paymentIntentId}, user ${userId}`);
+
+        return {
+            subscription: this.formatSubscription(subscription),
+            paymentLog: this.formatPaymentLog(paymentLog),
+        };
+    }
+
+    private computeExpiryDate(duration: PlanDuration): Date {
+        const date = new Date();
+        if (duration === PlanDuration.MONTHLY) {
+            date.setMonth(date.getMonth() + 1);
+        } else {
+            date.setFullYear(date.getFullYear() + 1);
+        }
+        return date;
+    }
+
+    private formatSubscription(sub: any): any {
+        const o = sub.toObject ? sub.toObject() : sub;
+        return {
+            id: o._id?.toString() ?? o.id,
+            planId: o.planId?._id?.toString() ?? o.planId?.toString() ?? o.planId,
+            userId: o.userId?.toString?.() ?? o.userId,
+            amountPaid: o.amountPaid,
+            status: o.status,
+            duration: o.duration,
+            expiryDate: o.expiryDate ? new Date(o.expiryDate).toISOString() : null,
+            createdAt: o.createdAt ? new Date(o.createdAt).toISOString() : null,
+            updatedAt: o.updatedAt ? new Date(o.updatedAt).toISOString() : null,
+        };
+    }
+
+    private formatPaymentLog(log: any): any {
+        const o = log.toObject ? log.toObject() : log;
+        return {
+            id: o._id?.toString() ?? o.id,
+            userId: o.userId?.toString?.() ?? o.userId,
+            paymentType: o.paymentType,
+            planId: o.planId?.toString?.() ?? o.planId,
+            subscriptionId: o.subscriptionId?.toString?.() ?? o.subscriptionId,
+            paymentIntentId: o.paymentIntentId,
+            amount: o.amount,
+            currency: o.currency,
+            status: o.status,
+            createdAt: o.createdAt ? new Date(o.createdAt).toISOString() : null,
+        };
     }
 }
 
