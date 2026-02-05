@@ -53,15 +53,15 @@ export class AdminCategoryController {
     @ApiQuery({ name: 'page', required: false, type: Number, example: 1 })
     @ApiQuery({ name: 'limit', required: false, type: Number, example: 10 })
     @ApiQuery({ name: 'status', required: false, enum: CategoryStatus })
-    @ApiQuery({ name: 'sortby', required: false, enum: ['ASC', 'DESC'], description: 'Sort by sortBy column (ASC/DESC). When provided, results are ordered only by sortBy.' })
+    @ApiQuery({ name: 'sortBy', required: false, enum: ['ASC', 'DESC'], description: 'Sort by sortBy column (ASC/DESC). When provided, results are ordered only by sortBy.' })
     @ApiResponse({ status: 200, description: 'Categories retrieved successfully' })
     async getCategories(
         @Query('page') page: number = 1,
         @Query('limit') limit: number = 10,
         @Query('status') status?: CategoryStatus,
-        @Query('sortby') sortby?: string,
+        @Query('sortBy') sortBy?: string,
     ) {
-        return await this.categoryService.getAllCategories(Number(page), Number(limit), status, sortby);
+        return await this.categoryService.getAllCategories(Number(page), Number(limit), status, sortBy);
     }
 
     @Get(':id')

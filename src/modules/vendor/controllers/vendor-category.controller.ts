@@ -11,12 +11,12 @@ export class VendorCategoryController {
 
     @Get()
     @ApiOperation({ summary: 'Get all active categories (by title A–Z, or by sortBy when sortby=ASC/DESC)' })
-    @ApiQuery({ name: 'sortby', required: false, enum: ['ASC', 'DESC'], description: 'Sort by sortBy column (ASC/DESC). When provided, results are ordered only by sortBy.' })
+    @ApiQuery({ name: 'sortBy', required: false, enum: ['ASC', 'DESC'], description: 'Sort by sortBy column (ASC/DESC). When provided, results are ordered only by sortBy.' })
     @ApiResponse({ status: 200, description: 'Categories retrieved successfully' })
-    async getCategories(@Query('sortby') sortby?: string) {
+    async getCategories(@Query('sortBy') sortBy?: string) {
         return {
             message: 'Categories retrieved successfully',
-            data: await this.categoryService.getActiveCategories(sortby),
+            data: await this.categoryService.getActiveCategories(sortBy),
         };
     }
 

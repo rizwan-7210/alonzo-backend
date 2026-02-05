@@ -187,6 +187,7 @@ export class CategoryService {
     // Public methods for vendor/user (read-only)
     async getActiveCategories(sortby?: string) {
         const sortOrder = this.parseSortByParam(sortby);
+        // When sortby has a value (ASC/DESC): sort only by sortBy column — do not apply title sort
         const sort = sortOrder !== null
             ? { sortBy: sortOrder }
             : { createdAt: -1 };
@@ -199,7 +200,7 @@ export class CategoryService {
         if (sortOrder !== null) {
             return categories.map(category => this.formatCategoryResponse(category));
         }
-        // Default: sort by title ascending (alphabetical)
+        // Default (no sortby param): sort by title ascending (alphabetical)
         const sortedCategories = categories.sort((a, b) => {
             const titleA = a.title.toLowerCase();
             const titleB = b.title.toLowerCase();
