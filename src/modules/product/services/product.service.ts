@@ -419,6 +419,68 @@ export class ProductService {
         };
     }
 
+    /**
+     * Get products for admin with optional filters (userId, fromDate, toDate, inventoryStatus, status, search) and pagination.
+     */
+    async getProductsForAdmin(query: {
+        page?: number;
+        limit?: number;
+        userId?: string;
+        fromDate?: string;
+        toDate?: string;
+        inventoryStatus?: InventoryStatus;
+        status?: ProductStatus;
+        search?: string;
+    }) {
+        const page = query.page ?? 1;
+        const limit = query.limit ?? 10;
+        const conditions: any = {};
+
+        if (query.userId) {
+            conditions.userId = new Types.ObjectId(query.userId);
+        }
+        if (query.status) {
+            conditions.status = query.status;
+        }
+        if (query.inventoryStatus) {
+            conditions.inventoryStatus = query.inventoryStatus;
+        }
+        if (query.search) {
+            conditions.title = { $regex: query.search, $options: 'i' };
+        }
+        if (query.fromDate || query.toDate) {
+            conditions.createdAt = {};
+            if (query.fromDate) {
+                conditions.createdAt.$gte = new Date(query.fromDate);
+            }
+            if (query.toDate) {
+                const end = new Date(query.toDate);
+                end.setHours(23, 59, 59, 999);
+                conditions.createdAt.$lte = end;
+            }
+        }
+
+        const result = await this.productRepository.paginate(page, limit, conditions, {
+            sort: { createdAt: -1 },
+            populate: [{
+                path: 'files',
+                select: 'name originalName path mimeType size type category subType description createdAt updatedAt',
+            }],
+        });
+
+        return {
+            data: result.data.map(product => this.formatProductResponse(product)),
+            meta: {
+                total: result.total,
+                page: result.page,
+                limit: result.limit,
+                totalPages: result.totalPages,
+                hasNext: result.hasNext,
+                hasPrev: result.hasPrev,
+            },
+        };
+    }
+
     async getActiveProductById(id: string) {
         const product = await this.productRepository.findByIdWithFiles(id);
         if (!product) {

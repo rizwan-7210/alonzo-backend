@@ -4,6 +4,7 @@ import { ConfigModule, ConfigService } from '@nestjs/config';
 import { ProductService } from './services/product.service';
 import { VendorProductController } from './controllers/vendor-product.controller';
 import { UserProductController } from './controllers/user-product.controller';
+import { AdminProductController } from './controllers/admin-product.controller';
 import { SharedModule } from '../../shared/shared.module';
 import { FileModule } from '../file/file.module';
 import { UserModule } from '../user/user.module';
@@ -22,7 +23,7 @@ import { UserModule } from '../user/user.module';
             inject: [ConfigService],
         }),
     ],
-    controllers: [VendorProductController, UserProductController],
+    controllers: [VendorProductController, UserProductController, AdminProductController],
     providers: [ProductService],
     exports: [ProductService],
 })
