@@ -18,7 +18,7 @@ export class ProductRepository extends BaseRepository<ProductDocument> {
             return [];
         }
         return this.productModel
-            .find({ userId: new Types.ObjectId(userId) })
+            .find({ userId: new Types.ObjectId(userId), ...this.notDeletedCondition() })
             .sort({ createdAt: -1 })
             .exec();
     }
@@ -28,9 +28,13 @@ export class ProductRepository extends BaseRepository<ProductDocument> {
             return [];
         }
         return this.productModel
-            .find({ userId: new Types.ObjectId(userId), status })
+            .find({ userId: new Types.ObjectId(userId), status, ...this.notDeletedCondition() })
             .sort({ createdAt: -1 })
             .exec();
+    }
+
+    private notDeletedCondition(): { deletedAt: null } {
+        return { deletedAt: null };
     }
 
     async findActiveProducts(page: number = 1, limit: number = 10): Promise<{
@@ -42,7 +46,7 @@ export class ProductRepository extends BaseRepository<ProductDocument> {
         hasNext: boolean;
         hasPrev: boolean;
     }> {
-        return this.paginate(page, limit, { status: ProductStatus.ACTIVE }, {
+        return this.paginate(page, limit, { status: ProductStatus.ACTIVE, ...this.notDeletedCondition() }, {
             sort: { createdAt: -1 },
             populate: [{
                 path: 'files',
@@ -74,6 +78,7 @@ export class ProductRepository extends BaseRepository<ProductDocument> {
         return this.paginate(page, limit, {
             userId: new Types.ObjectId(userId),
             status: ProductStatus.ACTIVE,
+            ...this.notDeletedCondition(),
         }, {
             sort: { createdAt: -1 },
         });
@@ -87,6 +92,7 @@ export class ProductRepository extends BaseRepository<ProductDocument> {
             .findOne({
                 _id: new Types.ObjectId(id),
                 userId: new Types.ObjectId(userId),
+                deletedAt: null,
             })
             .exec();
     }
@@ -99,6 +105,7 @@ export class ProductRepository extends BaseRepository<ProductDocument> {
             .findOne({
                 _id: new Types.ObjectId(id),
                 status: ProductStatus.ACTIVE,
+                deletedAt: null,
             })
             .exec();
     }
@@ -108,11 +115,20 @@ export class ProductRepository extends BaseRepository<ProductDocument> {
             return null;
         }
         return this.productModel
-            .findById(id)
+            .findOne({ _id: new Types.ObjectId(id), deletedAt: null })
             .populate({
                 path: 'files',
                 select: 'name originalName path mimeType size type category subType description createdAt updatedAt',
             })
+            .exec();
+    }
+
+    async softDelete(id: string): Promise<ProductDocument | null> {
+        if (!this.isValidObjectId(id)) {
+            return null;
+        }
+        return this.productModel
+            .findByIdAndUpdate(id, { deletedAt: new Date() }, { new: true })
             .exec();
     }
 

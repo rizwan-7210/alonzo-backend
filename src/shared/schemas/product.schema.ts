@@ -29,6 +29,9 @@ export type ProductDocument = Product & Document;
             if (transformedRet.updatedAt) {
                 transformedRet.updatedAt = new Date(transformedRet.updatedAt).toISOString();
             }
+            if (transformedRet.deletedAt) {
+                transformedRet.deletedAt = new Date(transformedRet.deletedAt).toISOString();
+            }
 
             // Remove unwanted fields
             delete transformedRet.__v;
@@ -69,6 +72,9 @@ export class Product {
 
     @Prop({ type: String })
     description?: string;
+
+    @Prop({ type: Date })
+    deletedAt?: Date;
 }
 
 export const ProductSchema = SchemaFactory.createForClass(Product);
@@ -79,6 +85,7 @@ ProductSchema.index({ status: 1 });
 ProductSchema.index({ inventoryStatus: 1 });
 ProductSchema.index({ createdAt: -1 });
 ProductSchema.index({ title: 'text' }); // Text search index
+ProductSchema.index({ deletedAt: 1 });
 
 // Virtual for user relation
 ProductSchema.virtual('user', {

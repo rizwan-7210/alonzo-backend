@@ -1,4 +1,4 @@
-import { Controller, Get, Query, Param } from '@nestjs/common';
+import { Controller, Get, Query, Param, Delete, HttpCode, HttpStatus } from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiResponse, ApiBearerAuth, ApiQuery, ApiParam } from '@nestjs/swagger';
 import { ProductService } from '../services/product.service';
 import { AdminProductQueryDto } from '../dto/admin-product-query.dto';
@@ -98,5 +98,17 @@ export class AdminProductController {
             message: 'Product retrieved successfully',
             data: await this.productService.getProductById(id),
         };
+    }
+
+    @Delete(':id')
+    @HttpCode(HttpStatus.OK)
+    @ApiOperation({ summary: 'Soft-delete product by ID (admin)' })
+    @ApiParam({ name: 'id', description: 'Product ID' })
+    @ApiResponse({ status: 200, description: 'Product deleted successfully' })
+    @ApiResponse({ status: 401, description: 'Unauthorized' })
+    @ApiResponse({ status: 404, description: 'Product not found' })
+    @ApiResponse({ status: 500, description: 'Internal server error' })
+    async deleteProduct(@Param('id') id: string) {
+        return await this.productService.deleteProductForAdmin(id);
     }
 }

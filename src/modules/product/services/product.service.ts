@@ -322,6 +322,21 @@ export class ProductService {
         return this.formatProductResponse(product);
     }
 
+    /**
+     * Soft-delete product (admin only). Sets deletedAt; product is excluded from all list/detail queries.
+     */
+    async deleteProductForAdmin(id: string): Promise<{ message: string }> {
+        const product = await this.productRepository.findByIdWithFiles(id);
+        if (!product) {
+            throw new NotFoundException('Product not found');
+        }
+        const updated = await this.productRepository.softDelete(id);
+        if (!updated) {
+            throw new NotFoundException('Product not found');
+        }
+        return { message: 'Product deleted successfully' };
+    }
+
     async getVendorProducts(
         userId: string,
         page: number = 1,
@@ -332,7 +347,7 @@ export class ProductService {
         toDate?: string,
         sortByName?: 'ASC' | 'DESC',
     ) {
-        const conditions: any = { userId: new Types.ObjectId(userId) };
+        const conditions: any = { userId: new Types.ObjectId(userId), deletedAt: null };
 
         if (status) {
             conditions.status = status;
@@ -383,7 +398,7 @@ export class ProductService {
 
     // Public methods for users (read-only)
     async getActiveProducts(page: number = 1, limit: number = 10, search?: string, userId?: string, sortByName?: 'ASC' | 'DESC') {
-        const conditions: any = { status: ProductStatus.ACTIVE };
+        const conditions: any = { status: ProductStatus.ACTIVE, deletedAt: null };
 
         // Filter by userId if provided
         if (userId) {
@@ -434,7 +449,7 @@ export class ProductService {
     }) {
         const page = query.page ?? 1;
         const limit = query.limit ?? 10;
-        const conditions: any = {};
+        const conditions: any = { deletedAt: null };
 
         if (query.userId) {
             conditions.userId = new Types.ObjectId(query.userId);
@@ -528,6 +543,7 @@ export class ProductService {
         // Similarity: Products from the same vendor (userId)
         const conditions: any = {
             status: ProductStatus.ACTIVE,
+            deletedAt: null,
             _id: { $ne: new Types.ObjectId(productId) }, // Exclude current product
             userId: new Types.ObjectId(productUserId), // Only products from the same vendor
         };
@@ -543,6 +559,7 @@ export class ProductService {
             conditions.$and = [
                 {
                     status: ProductStatus.ACTIVE,
+                    deletedAt: null,
                     _id: { $ne: new Types.ObjectId(productId) },
                     userId: new Types.ObjectId(productUserId),
                 },
