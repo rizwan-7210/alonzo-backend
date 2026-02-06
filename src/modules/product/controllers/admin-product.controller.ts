@@ -1,5 +1,5 @@
-import { Controller, Get, Query } from '@nestjs/common';
-import { ApiTags, ApiOperation, ApiResponse, ApiBearerAuth, ApiQuery } from '@nestjs/swagger';
+import { Controller, Get, Query, Param } from '@nestjs/common';
+import { ApiTags, ApiOperation, ApiResponse, ApiBearerAuth, ApiQuery, ApiParam } from '@nestjs/swagger';
 import { ProductService } from '../services/product.service';
 import { AdminProductQueryDto } from '../dto/admin-product-query.dto';
 import { Roles } from 'src/common/decorators/roles.decorator';
@@ -71,6 +71,32 @@ export class AdminProductController {
                 hasNext: result.pagination.hasNext,
                 hasPrev: result.pagination.hasPrev,
             },
+        };
+    }
+
+    @Get(':id')
+    @ApiOperation({ summary: 'Get product details by ID (admin)' })
+    @ApiParam({ name: 'id', description: 'Product ID' })
+    @ApiResponse({
+        status: 200,
+        description: 'Product retrieved successfully',
+        schema: {
+            type: 'object',
+            properties: {
+                success: { type: 'boolean', example: true },
+                message: { type: 'string', example: 'Product retrieved successfully' },
+                data: { type: 'object', description: 'Product object with files' },
+                timestamp: { type: 'string', format: 'date-time' },
+            },
+        },
+    })
+    @ApiResponse({ status: 401, description: 'Unauthorized' })
+    @ApiResponse({ status: 404, description: 'Product not found' })
+    @ApiResponse({ status: 500, description: 'Internal server error' })
+    async getProductById(@Param('id') id: string) {
+        return {
+            message: 'Product retrieved successfully',
+            data: await this.productService.getProductById(id),
         };
     }
 }
