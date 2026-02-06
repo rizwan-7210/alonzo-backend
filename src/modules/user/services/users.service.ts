@@ -62,10 +62,25 @@ export class UsersService {
 
             const result = await this.usersRepository.findApprovedVendorsWithPagination(page, limit);
 
+            // Format vendors with categoryId as object (same as vendor-requests)
+            const formattedVendors = result.data.map((vendor: any) => {
+                const vendorObj = vendor.toObject ? vendor.toObject() : vendor;
+                const formattedVendor: any = { ...vendorObj };
+
+                if (vendorObj.categoryId) {
+                    formattedVendor.categoryId = {
+                        _id: vendorObj.categoryId._id?.toString() || vendorObj.categoryId.id,
+                        title: vendorObj.categoryId.title,
+                    };
+                }
+
+                return formattedVendor;
+            });
+
             return {
                 message: 'Approved vendors retrieved successfully',
                 data: {
-                    vendors: result.data,
+                    vendors: formattedVendors,
                     pagination: {
                         total: result.total,
                         page: result.page,

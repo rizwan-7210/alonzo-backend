@@ -40,7 +40,10 @@ export class UsersRepository extends BaseRepository<UserDocument> {
 
         return this.paginate(page, limit, conditions, {
             sort: { createdAt: -1 },
-            populate: [{ path: 'profileImage', select: 'id path name mimeType size' }],
+            populate: [
+                { path: 'profileImage', select: 'id path name mimeType size' },
+                { path: 'categoryId', select: 'id title' },
+            ],
         });
     }
 
