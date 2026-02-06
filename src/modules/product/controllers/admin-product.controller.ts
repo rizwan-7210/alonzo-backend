@@ -23,7 +23,30 @@ export class AdminProductController {
     @ApiQuery({ name: 'inventoryStatus', required: false, enum: InventoryStatus })
     @ApiQuery({ name: 'status', required: false, enum: ProductStatus })
     @ApiQuery({ name: 'search', required: false, type: String, description: 'Search by product title' })
-    @ApiResponse({ status: 200, description: 'Products retrieved successfully' })
+    @ApiResponse({
+        status: 200,
+        description: 'Products retrieved successfully',
+        schema: {
+            type: 'object',
+            properties: {
+                success: { type: 'boolean', example: true },
+                message: { type: 'string', nullable: true },
+                data: {
+                    type: 'object',
+                    properties: {
+                        data: { type: 'array', items: { type: 'object' } },
+                        total: { type: 'number' },
+                        page: { type: 'number' },
+                        limit: { type: 'number' },
+                        totalPages: { type: 'number' },
+                        hasNext: { type: 'boolean' },
+                        hasPrev: { type: 'boolean' },
+                    },
+                },
+                timestamp: { type: 'string', format: 'date-time' },
+            },
+        },
+    })
     @ApiResponse({ status: 401, description: 'Unauthorized' })
     @ApiResponse({ status: 500, description: 'Internal server error' })
     async getProducts(@Query() queryDto: AdminProductQueryDto) {
@@ -39,8 +62,15 @@ export class AdminProductController {
         });
         return {
             message: 'Products retrieved successfully',
-            data: result.data,
-            meta: result.meta,
+            data: {
+                data: result.data,
+                total: result.pagination.total,
+                page: result.pagination.page,
+                limit: result.pagination.limit,
+                totalPages: result.pagination.totalPages,
+                hasNext: result.pagination.hasNext,
+                hasPrev: result.pagination.hasPrev,
+            },
         };
     }
 }

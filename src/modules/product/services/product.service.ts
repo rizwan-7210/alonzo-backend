@@ -470,7 +470,7 @@ export class ProductService {
 
         return {
             data: result.data.map(product => this.formatProductResponse(product)),
-            meta: {
+            pagination: {
                 total: result.total,
                 page: result.page,
                 limit: result.limit,
