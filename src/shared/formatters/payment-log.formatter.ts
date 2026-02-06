@@ -1,7 +1,34 @@
 import { BaseFormatter } from './base.formatter';
 import { PaymentType } from '../../common/constants/payment.constants';
 
+/** Check if value looks like a populated doc (object with _id and other keys) */
+function isPopulatedObject(obj: any): boolean {
+    return obj && typeof obj === 'object' && !Buffer.isBuffer(obj) && obj._id != null && Object.keys(obj).length > 1;
+}
+
 export class PaymentLogFormatter {
+    private static formatPopulatedUser(user: any): string | { id: string; firstName?: string; lastName?: string; email?: string } | null {
+        if (!user) return null;
+        if (!isPopulatedObject(user)) return BaseFormatter.objectIdToString(user) ?? null;
+        const id = BaseFormatter.objectIdToString(user._id ?? user.id) ?? '';
+        return { id, firstName: user.firstName, lastName: user.lastName, email: user.email };
+    }
+
+    private static formatPopulatedPlan(plan: any): string | { id: string; title?: string; amount?: number; duration?: string; description?: string; status?: string } | null {
+        if (!plan) return null;
+        if (!isPopulatedObject(plan)) return BaseFormatter.objectIdToString(plan) ?? null;
+        const id = BaseFormatter.objectIdToString(plan._id ?? plan.id) ?? '';
+        return { id, title: plan.title, amount: plan.amount, duration: plan.duration, description: plan.description, status: plan.status };
+    }
+
+    private static formatPopulatedSubscription(sub: any): string | { id: string; status?: string; expiryDate?: string; duration?: string; amountPaid?: number } | null {
+        if (!sub) return null;
+        if (!isPopulatedObject(sub)) return BaseFormatter.objectIdToString(sub) ?? null;
+        const id = BaseFormatter.objectIdToString(sub._id ?? sub.id) ?? '';
+        const expiryDate = sub.expiryDate ? (typeof sub.expiryDate === 'string' ? sub.expiryDate : new Date(sub.expiryDate).toISOString()) : undefined;
+        return { id, status: sub.status, expiryDate, duration: sub.duration, amountPaid: sub.amountPaid };
+    }
+
     /**
      * Format payment log response
      */
@@ -26,9 +53,9 @@ export class PaymentLogFormatter {
 
         BaseFormatter.mapProperties(logObj, response, properties);
 
-        // Convert ObjectIds
+        // Relations: return id string or populated object { id, ... }
         if (logObj.userId) {
-            response.userId = BaseFormatter.objectIdToString(logObj.userId);
+            response.userId = this.formatPopulatedUser(logObj.userId);
         }
 
         if (logObj.bookingId) {
@@ -36,11 +63,11 @@ export class PaymentLogFormatter {
         }
 
         if (logObj.planId) {
-            response.planId = BaseFormatter.objectIdToString(logObj.planId);
+            response.planId = this.formatPopulatedPlan(logObj.planId);
         }
 
         if (logObj.subscriptionId) {
-            response.subscriptionId = BaseFormatter.objectIdToString(logObj.subscriptionId);
+            response.subscriptionId = this.formatPopulatedSubscription(logObj.subscriptionId);
         }
 
         // Convert dates
@@ -84,7 +111,6 @@ export class PaymentLogFormatter {
         return {
             serialNumber: (page - 1) * limit + index + 1,
             ...formatted,
-            userId: BaseFormatter.objectIdToString(userObj._id || logObj.userId),
             userName,
             email: userObj.email || 'N/A',
             type: formatted.paymentType,
