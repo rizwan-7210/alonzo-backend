@@ -16,7 +16,8 @@ export class VendorNotificationService {
 
     async getMyNotifications(userId: string, queryDto: VendorNotificationQueryDto) {
         // Only get notifications that belong to this user (filtered by recipient)
-        const { page = 1, limit = 10, status } = queryDto;
+        const { page = 1, limit = 10, per_page, status } = queryDto;
+        const pageSize = per_page ?? limit ?? 10;
 
         const conditions: any = {
             recipient: new Types.ObjectId(userId), // Only this user's notifications
@@ -27,7 +28,7 @@ export class VendorNotificationService {
 
         const result = await this.notificationRepository.paginate(
             page,
-            limit,
+            pageSize,
             conditions,
             {
                 sort: { createdAt: -1 },
@@ -72,14 +73,19 @@ export class VendorNotificationService {
 
         // Toggle status: if read, make unread; if unread, make read
         // Only updates notifications that belong to this user (verified above)
-        let updatedNotification;
-        if (notification.status === NotificationStatus.READ) {
-            updatedNotification = await this.notificationRepository.markAsUnread(notificationId);
-        } else {
-            updatedNotification = await this.notificationRepository.markAsRead(notificationId);
-        }
+        const markAsUnread = notification.status === NotificationStatus.READ;
+        const updatedNotification = markAsUnread
+            ? await this.notificationRepository.markAsUnread(notificationId)
+            : await this.notificationRepository.markAsRead(notificationId);
 
-        return this.formatNotificationResponse(updatedNotification);
+        const message = markAsUnread
+            ? 'Notification marked as unread successfully'
+            : 'Notification marked as read successfully';
+
+        return {
+            message,
+            data: this.formatNotificationResponse(updatedNotification),
+        };
     }
 
     async markAllAsRead(userId: string) {

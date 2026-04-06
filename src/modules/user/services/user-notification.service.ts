@@ -72,14 +72,19 @@ export class UserNotificationService {
 
         // Toggle status: if read, make unread; if unread, make read
         // Only updates notifications that belong to this user (verified above)
-        let updatedNotification;
-        if (notification.status === NotificationStatus.READ) {
-            updatedNotification = await this.notificationRepository.markAsUnread(notificationId);
-        } else {
-            updatedNotification = await this.notificationRepository.markAsRead(notificationId);
-        }
+        const markAsUnread = notification.status === NotificationStatus.READ;
+        const updatedNotification = markAsUnread
+            ? await this.notificationRepository.markAsUnread(notificationId)
+            : await this.notificationRepository.markAsRead(notificationId);
 
-        return this.formatNotificationResponse(updatedNotification);
+        const message = markAsUnread
+            ? 'Notification marked as unread successfully'
+            : 'Notification marked as read successfully';
+
+        return {
+            message,
+            data: this.formatNotificationResponse(updatedNotification),
+        };
     }
 
     async markAllAsRead(userId: string) {

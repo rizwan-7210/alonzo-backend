@@ -71,15 +71,18 @@ async function bootstrap() {
     origin: isProduction
       ? [
         'https://custom-dev.onlinetestingserver.com',
-        'http://custom-dev.onlinetestingserver.com'
-      ]
-      : [
+        'https://custom-dev.onlinetestingserver.com:1231',
+        'http://custom-dev.onlinetestingserver.com',
+        'http://custom-dev.onlinetestingserver.com:1231',
         'http://localhost:5173',
-        'http://127.0.0.1:5173'
-      ],
+        'http://127.0.0.1:5173',
+      ]
+      : ['http://localhost:5173', 'http://127.0.0.1:5173'],
     methods: 'GET,HEAD,PUT,PATCH,POST,DELETE,OPTIONS',
-    allowedHeaders: 'Content-Type, Authorization',
-    credentials: true,   // ALWAYS true in dev
+    allowedHeaders: 'Content-Type, Authorization, Accept, Origin',
+    credentials: true,
+    preflightContinue: false,
+    optionsSuccessStatus: 204,
   });
 
   // Global prefix

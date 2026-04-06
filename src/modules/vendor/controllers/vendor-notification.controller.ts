@@ -17,6 +17,13 @@ export class VendorNotificationController {
     @ApiOperation({ summary: 'Get all notifications for the vendor with pagination' })
     @ApiQuery({ name: 'page', required: false, type: Number, example: 1 })
     @ApiQuery({ name: 'limit', required: false, type: Number, example: 10 })
+    @ApiQuery({
+        name: 'per_page',
+        required: false,
+        type: Number,
+        example: 10,
+        description: 'Records per page (alias for limit; takes precedence if both are provided)',
+    })
     @ApiQuery({ name: 'status', required: false, enum: ['read', 'unread', 'archived'] })
     @ApiResponse({
         status: 200,
@@ -92,11 +99,12 @@ export class VendorNotificationController {
     @ApiParam({ name: 'id', description: 'Notification ID' })
     @ApiResponse({
         status: 200,
-        description: 'Notification status toggled successfully',
+        description:
+            'Message reflects the new state: "Notification marked as read successfully" or "Notification marked as unread successfully"',
         schema: {
             example: {
                 success: true,
-                message: 'Notification status toggled successfully',
+                message: 'Notification marked as read successfully',
                 data: {
                     id: '...',
                     title: 'Notification Title',
@@ -120,10 +128,7 @@ export class VendorNotificationController {
         @Param('id') notificationId: string,
     ) {
         const userId = user.sub || user._id || user.id;
-        return {
-            message: 'Notification status toggled successfully',
-            data: await this.vendorNotificationService.toggleReadStatus(userId, notificationId),
-        };
+        return this.vendorNotificationService.toggleReadStatus(userId, notificationId);
     }
 
     @Patch('mark-all-read')

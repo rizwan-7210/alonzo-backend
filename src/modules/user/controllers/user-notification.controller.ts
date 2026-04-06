@@ -92,11 +92,12 @@ export class UserNotificationController {
     @ApiParam({ name: 'id', description: 'Notification ID' })
     @ApiResponse({
         status: 200,
-        description: 'Notification status toggled successfully',
+        description:
+            'Message reflects the new state: "Notification marked as read successfully" or "Notification marked as unread successfully"',
         schema: {
             example: {
                 success: true,
-                message: 'Notification status toggled successfully',
+                message: 'Notification marked as read successfully',
                 data: {
                     id: '...',
                     title: 'Notification Title',
@@ -120,10 +121,7 @@ export class UserNotificationController {
         @Param('id') notificationId: string,
     ) {
         const userId = user.sub || user._id || user.id;
-        return {
-            message: 'Notification status toggled successfully',
-            data: await this.userNotificationService.toggleReadStatus(userId, notificationId),
-        };
+        return this.userNotificationService.toggleReadStatus(userId, notificationId);
     }
 
     @Patch('mark-all-read')
