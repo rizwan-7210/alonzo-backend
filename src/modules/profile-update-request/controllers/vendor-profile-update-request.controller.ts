@@ -42,7 +42,11 @@ export class VendorProfileUpdateRequestController {
         { name: 'registrationCertificate', maxCount: 1 },
     ], multerConfig))
     @ApiConsumes('multipart/form-data')
-    @ApiOperation({ summary: 'Create a profile update request' })
+    @ApiOperation({
+        summary: 'Create or update a profile update request',
+        description:
+            'Creates a new request, or if a pending request already exists, updates it with the new values and optional file replacements.',
+    })
     @ApiBody({
         schema: {
             type: 'object',
@@ -73,8 +77,11 @@ export class VendorProfileUpdateRequestController {
             },
         },
     })
-    @ApiResponse({ status: 201, description: 'Profile update request created successfully' })
-    @ApiResponse({ status: 400, description: 'Bad request - pending request already exists or invalid file type' })
+    @ApiResponse({
+        status: 201,
+        description: 'Profile update request created or updated successfully (pending request merged when applicable)',
+    })
+    @ApiResponse({ status: 400, description: 'Bad request - invalid file type or upload error' })
     async createRequest(
         @CurrentUser() user: any,
         @Body() createDto: CreateProfileUpdateRequestDto,
@@ -129,12 +136,12 @@ export class VendorProfileUpdateRequestController {
 
             return {
                 success: true,
-                message: 'Profile update request created successfully',
+                message: 'Profile update request submitted successfully',
                 data: request,
             };
         } catch (error: any) {
             throw new BadRequestException(
-                error.message || 'Failed to create profile update request',
+                error.message || 'Failed to submit profile update request',
             );
         }
     }

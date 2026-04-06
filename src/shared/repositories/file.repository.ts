@@ -92,6 +92,33 @@ export class FileRepository extends BaseRepository<FileDocument> {
         );
     }
 
+    /**
+     * Remove files for an entity + subType from disk and database (e.g. replace on profile update request).
+     */
+    async removeByEntityAndSubType(
+        fileableId: string,
+        fileableType: string,
+        subType: FileSubType,
+    ): Promise<void> {
+        const files = await this.fileModel
+            .find({
+                fileableId: new Types.ObjectId(fileableId),
+                fileableType,
+                subType,
+                isActive: true,
+            })
+            .exec();
+
+        if (files.length === 0) {
+            return;
+        }
+
+        await this.deleteFilesFromDisk(files);
+
+        const ids = files.map((f) => f._id);
+        await this.fileModel.deleteMany({ _id: { $in: ids } }).exec();
+    }
+
     private async deleteFilesFromDisk(files: FileDocument[]): Promise<void> {
         const uploadsDir = path.join(process.cwd(), 'uploads');
 

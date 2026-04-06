@@ -43,15 +43,7 @@ export class ProfileUpdateRequestService {
             throw new NotFoundException('User not found');
         }
 
-        // Check if there's already a pending request
-        const existingPendingRequest = await this.profileUpdateRequestRepository.findPendingByUserId(userId);
-        if (existingPendingRequest) {
-            throw new BadRequestException('You already have a pending profile update request');
-        }
-
-        // Create the request
-        const requestData: any = {
-            userId: new Types.ObjectId(userId),
+        const fields: any = {
             firstName: createDto.firstName,
             phone: createDto.phone,
             dial_code: createDto.dial_code,
@@ -62,21 +54,80 @@ export class ProfileUpdateRequestService {
             status: ProfileUpdateRequestStatus.PENDING,
         };
 
-        const request = await this.profileUpdateRequestRepository.create(requestData);
+        const existingPendingRequest = await this.profileUpdateRequestRepository.findPendingByUserId(userId);
 
-        // Handle file uploads if provided
+        let request: any;
+        let replaceExistingFiles = false;
+
+        if (existingPendingRequest) {
+            // Merge new values into the existing pending request instead of rejecting
+            request = await this.profileUpdateRequestRepository.update(
+                existingPendingRequest._id.toString(),
+                { ...fields, rejectionReason: null },
+            );
+            if (!request) {
+                throw new InternalServerErrorException('Failed to update pending profile update request');
+            }
+            replaceExistingFiles = true;
+            this.logger.log(`Updated pending profile update request ${request._id} for user ${userId}`);
+        } else {
+            const requestData = {
+                ...fields,
+                userId: new Types.ObjectId(userId),
+            };
+            request = await this.profileUpdateRequestRepository.create(requestData);
+        }
+
+        const requestId = request._id.toString();
+
+        await this.uploadRequestAttachments(
+            requestId,
+            userId,
+            user,
+            profileImage,
+            pharmacyLicense,
+            registrationCertificate,
+            replaceExistingFiles,
+        );
+
+        try {
+            const requestWithRelations = await this.profileUpdateRequestRepository.findByIdWithRelations(requestId);
+            return requestWithRelations || request;
+        } catch (error) {
+            this.logger.warn(`Failed to populate relations for request ${requestId}:`, error);
+            return request;
+        }
+    }
+
+    private async uploadRequestAttachments(
+        requestId: string,
+        userId: string,
+        user: any,
+        profileImage: Express.Multer.File | undefined,
+        pharmacyLicense: Express.Multer.File | undefined,
+        registrationCertificate: Express.Multer.File | undefined,
+        replaceExisting: boolean,
+    ): Promise<void> {
+        const FILEABLE = 'ProfileUpdateRequest';
+
         if (profileImage) {
             try {
+                if (replaceExisting) {
+                    await this.fileRepository.removeByEntityAndSubType(
+                        requestId,
+                        FILEABLE,
+                        FileSubType.PROFILE_IMAGE,
+                    );
+                }
                 const profileImageFile = await this.fileService.uploadFile(
                     profileImage,
-                    request._id.toString(),
-                    'ProfileUpdateRequest',
+                    requestId,
+                    FILEABLE,
                     FileCategory.PROFILE,
                     undefined,
                     userId,
                     user,
                 );
-                // Update file with subType
                 await this.fileRepository.update(profileImageFile._id.toString(), {
                     subType: FileSubType.PROFILE_IMAGE,
                 } as any);
@@ -88,10 +139,17 @@ export class ProfileUpdateRequestService {
 
         if (pharmacyLicense) {
             try {
+                if (replaceExisting) {
+                    await this.fileRepository.removeByEntityAndSubType(
+                        requestId,
+                        FILEABLE,
+                        FileSubType.PHARMACY_LICENSE,
+                    );
+                }
                 const licenseFile = await this.fileService.uploadFile(
                     pharmacyLicense,
-                    request._id.toString(),
-                    'ProfileUpdateRequest',
+                    requestId,
+                    FILEABLE,
                     FileCategory.DOCUMENT,
                     undefined,
                     userId,
@@ -108,10 +166,17 @@ export class ProfileUpdateRequestService {
 
         if (registrationCertificate) {
             try {
+                if (replaceExisting) {
+                    await this.fileRepository.removeByEntityAndSubType(
+                        requestId,
+                        FILEABLE,
+                        FileSubType.REGISTRATION_CERTIFICATE,
+                    );
+                }
                 const certFile = await this.fileService.uploadFile(
                     registrationCertificate,
-                    request._id.toString(),
-                    'ProfileUpdateRequest',
+                    requestId,
+                    FILEABLE,
                     FileCategory.DOCUMENT,
                     undefined,
                     userId,
@@ -124,19 +189,6 @@ export class ProfileUpdateRequestService {
                 this.logger.error(`Failed to upload registration certificate: ${error.message}`, error.stack);
                 throw new BadRequestException(`Failed to upload registration certificate: ${error.message}`);
             }
-        }
-
-        // Fetch request with relations
-        // If populate fails, return the request without relations
-        try {
-            const requestWithRelations = await this.profileUpdateRequestRepository.findByIdWithRelations(
-                request._id.toString(),
-            );
-            return requestWithRelations || request;
-        } catch (error) {
-            // Log error but return the request anyway
-            this.logger.warn(`Failed to populate relations for request ${request._id}:`, error);
-            return request;
         }
     }
 
